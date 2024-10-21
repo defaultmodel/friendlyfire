@@ -11,8 +11,8 @@ defaults:
     working-directory: ./src-tauri
 
 jobs:
-  check:
-    name: "Cargo check"
+  ci:
+    name: "CI"
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
@@ -22,34 +22,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-
-      - name: "Install rust"
-        uses: dtolnay/rust-toolchain@stable
-        
-      - run: cargo check
-
-  test:
-    name: "Cargo test"
-    runs-on: "ubuntu-latest"
-    steps:
-      - name: "Check out the repo"
-        uses: actions/checkout@v3
-
-      - name: "Install dependencies"
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-
-      - name: "Install rust"
-        uses: dtolnay/rust-toolchain@stable
-      - run: cargo test
-
-  fmt:
-    name: "Cargo format"
-    runs-on: "ubuntu-latest"
-    steps:
-      - name: "Check out the repo"
-        uses: actions/checkout@v3
 
       - name: "Install rust"
         uses: dtolnay/rust-toolchain@stable
@@ -57,24 +29,29 @@ jobs:
       - name: "Install rustfmt"
         run: "rustup component add rustfmt"
 
-      - run: "cargo fmt --all -- --check"
-
-  clippy:
-    name: "Cargo clippy"
-    runs-on: "ubuntu-latest"
-    steps:
-      - name: "Check out the repo"
-        uses: actions/checkout@v3
-
-      - name: "Install dependencies"
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-
-      - name: "Install rust"
-        uses: dtolnay/rust-toolchain@stable
-      
       - name: "Install clippy"
         run: "rustup component add clippy"
 
-      - run: "cargo clippy -- -D warnings"
+      - name: "Cache cargo registry"
+        uses: actions/cache@v3
+        with:
+          path: ~/src-tauri/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: "Cache cargo target"
+        uses: actions/cache@v3
+        with:
+          path: ~/src-tauri/target
+          key: ${{ runner.os }}-cargo-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: "Cargo check"
+        run: cargo check
+
+      - name: "Cargo test"
+        run: cargo test
+
+      - name: "Cargo format"
+        run: "cargo fmt --all -- --check"
+
+      - name: "Cargo clippy"
+        run: "cargo clippy -- -D warnings"
