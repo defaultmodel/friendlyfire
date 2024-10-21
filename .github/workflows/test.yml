@@ -6,6 +6,10 @@ on:
     branches:
       - main
 
+defaults:
+  run:
+    working-directory: ./src-tauri
+
 jobs:
   check:
     name: "Cargo check"
@@ -14,15 +18,15 @@ jobs:
       - name: "Check out the repo"
         uses: actions/checkout@v3
 
-      - uses: "actions-rs/toolchain@v1"
-        with:
-          profile: "minimal"
-          toolchain: "stable"
-          override: true
+      - name: "Install dependencies"
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
-      - uses: "actions-rs/cargo@v1"
-        with:
-          command: "check"
+      - name: "Install rust"
+        uses: dtolnay/rust-toolchain@stable
+        
+      - run: cargo check
 
   test:
     name: "Cargo test"
@@ -31,15 +35,14 @@ jobs:
       - name: "Check out the repo"
         uses: actions/checkout@v3
 
-      - uses: "actions-rs/toolchain@v1"
-        with:
-          profile: "minimal"
-          toolchain: "stable"
-          override: true
+      - name: "Install dependencies"
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
-      - uses: "actions-rs/cargo@v1"
-        with:
-          command: "test"
+      - name: "Install rust"
+        uses: dtolnay/rust-toolchain@stable
+      - run: cargo test
 
   fmt:
     name: "Cargo format"
@@ -48,18 +51,11 @@ jobs:
       - name: "Check out the repo"
         uses: actions/checkout@v3
 
-      - uses: "actions-rs/toolchain@v1"
-        with:
-          profile: "minimal"
-          toolchain: "stable"
-          override: true
-          
-      - run: "rustup component add rustfmt"
+      - name: "Install rust and rustfmt"
+        uses: dtolnay/rust-toolchain@stable
+        run: "rustup component add rustfmt"
 
-      - uses: "actions-rs/cargo@v1"
-        with:
-          command: "fmt"
-          args: "--all -- --check"
+      - run: "cargo fmt --all -- --check"
 
   clippy:
     name: "Cargo clippy"
@@ -68,15 +64,13 @@ jobs:
       - name: "Check out the repo"
         uses: actions/checkout@v3
 
-      - uses: "actions-rs/toolchain@v1"
-        with:
-          profile: "minimal"
-          toolchain: "stable"
-          override: true
+      - name: "Install dependencies"
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
-      - run: "rustup component add clippy"
+      - name: "Install rust and clippy"
+        uses: dtolnay/rust-toolchain@stable
+        run: "rustup component add clippy"
 
-      - uses: "actions-rs/cargo@v1"
-        with:
-          command: "clippy"
-          args: "-- -D warnings"
+      - run: "cargo clippy -- -D warnings"
