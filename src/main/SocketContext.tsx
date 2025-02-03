@@ -8,7 +8,7 @@ import {
 	useEffect,
 } from "react";
 import { io, type Socket } from "socket.io-client";
-import { version } from "../package.json";
+import { version } from "../../package.json";
 
 const CLIENT_VERSION = version;
 
