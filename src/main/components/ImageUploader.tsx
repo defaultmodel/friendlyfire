@@ -22,6 +22,8 @@ import FilerobotImageEditor, {
 	TABS,
 	TOOLS,
 } from "react-filerobot-image-editor";
+import { listen } from "@tauri-apps/api/event";
+import { readFile } from "@tauri-apps/plugin-fs";
 
 const ImageUploader: React.FC = () => {
 	const { socket, socketUrl } = useSocket();
@@ -31,6 +33,35 @@ const ImageUploader: React.FC = () => {
 	const [displayTime, setDisplayTime] = useState<number>(6);
 	const [position, setPosition] = useState<string>("center");
 	const [isEditorOpen, setIsEditorOpen] = useState(false);
+
+	interface FileDropEventPayload {
+		paths: string[];
+	}
+
+	useEffect(() => {
+		const unlisten = listen<FileDropEventPayload>(
+			"tauri://drag-drop",
+			async (event) => {
+				if (event.payload.paths as []) {
+					const filePath = event.payload.paths[0] as string;
+					try {
+						const fileContent = await readFile(filePath);
+						const file = new File([fileContent], filePath.split("/").pop()!, {
+							type: "image/*",
+						});
+						setSelectedFile(file);
+						setPreviewUrl(URL.createObjectURL(file));
+					} catch (error) {
+						console.error("Error reading file:", error);
+					}
+				}
+			},
+		);
+
+		return () => {
+			unlisten.then((f) => f());
+		};
+	}, []);
 
 	useEffect(() => {
 		if (!socket) return;
