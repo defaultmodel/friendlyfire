@@ -1,4 +1,3 @@
-// ImageUploader.tsx
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useSocket } from "../SocketContext";
@@ -15,15 +14,23 @@ import {
 	CircularProgress,
 	Paper,
 	Container,
+	IconButton,
+	Modal,
 } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import FilerobotImageEditor, {
+	TABS,
+	TOOLS,
+} from "react-filerobot-image-editor";
 
 const ImageUploader: React.FC = () => {
+	const { socket, socketUrl } = useSocket();
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 	const [uploading, setUploading] = useState<boolean>(false);
 	const [displayTime, setDisplayTime] = useState<number>(6);
 	const [position, setPosition] = useState<string>("center");
-	const { socket, socketUrl } = useSocket();
+	const [isEditorOpen, setIsEditorOpen] = useState(false);
 
 	useEffect(() => {
 		if (!socket) return;
@@ -61,21 +68,55 @@ const ImageUploader: React.FC = () => {
 	}, [selectedFile]);
 
 	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		if (event.target.files?.[0]) {
-			setSelectedFile(event.target.files[0]);
+		const file = event.target.files?.[0];
+		if (file) {
+			setSelectedFile(file);
+			setPreviewUrl(URL.createObjectURL(file)); // Create a preview URL
 		}
 	};
 
+	const handleEditClick = () => {
+		setIsEditorOpen(true);
+	};
+
+	const handleCloseEditor = () => {
+		setIsEditorOpen(false);
+	};
+
+	const base64ToFile = (base64: string, filename: string): File => {
+		const arr = base64.split(",");
+		const mime = arr[0].match(/:(.*?);/)?.[1];
+		const bstr = atob(arr[1]);
+		let n = bstr.length;
+		const u8arr = new Uint8Array(n);
+		while (n--) {
+			u8arr[n] = bstr.charCodeAt(n);
+		}
+		return new File([u8arr], filename, { type: mime });
+	};
+
 	const handleUpload = async () => {
-		if (!selectedFile) {
+		if (!previewUrl) {
 			alert("Please select a file first!");
 			return;
 		}
 
 		setUploading(true);
 
+		let fileToUpload: File;
+		if (previewUrl.startsWith("data:image")) {
+			// If the image is edited, convert the base64 URL to a File object
+			fileToUpload = base64ToFile(
+				previewUrl,
+				selectedFile?.name || "edited-image.png",
+			);
+		} else {
+			// If the image is not edited, use the original file
+			fileToUpload = selectedFile!;
+		}
+
 		const formData = new FormData();
-		formData.append("image", selectedFile);
+		formData.append("image", fileToUpload);
 
 		try {
 			await fetch("http://localhost:3000/upload", {
@@ -114,16 +155,83 @@ const ImageUploader: React.FC = () => {
 								Selected File: {selectedFile.name}
 							</Typography>
 							{previewUrl && (
-								<img
-									src={previewUrl}
-									alt="Preview"
-									style={{
-										maxWidth: "100%",
-										maxHeight: "200px",
-										margin: "auto",
+								<Box
+									sx={{
+										position: "relative",
+										display: "flex",
+										justifyContent: "center",
+										marginTop: 2,
+										"&:hover .edit-button": {
+											display: "block",
+										},
 									}}
-								/>
+								>
+									<img
+										src={previewUrl}
+										alt="Preview"
+										style={{
+											maxWidth: "100%",
+											maxHeight: "300px",
+											borderRadius: "8px",
+										}}
+									/>
+									<IconButton
+										className="edit-button"
+										sx={{
+											display: "none",
+											position: "absolute",
+											top: "50%",
+											left: "50%",
+											transform: "translate(-50%, -50%)",
+											backgroundColor: "rgba(255, 255, 255, 0.8)",
+											"&:hover": {
+												backgroundColor: "rgba(255, 255, 255, 1)",
+											},
+										}}
+										onClick={handleEditClick}
+									>
+										<EditIcon />
+									</IconButton>
+								</Box>
 							)}
+							<Modal open={isEditorOpen} onClose={handleCloseEditor}>
+								<Box
+									sx={{
+										position: "absolute",
+										top: "50%",
+										left: "50%",
+										transform: "translate(-50%, -50%)",
+										width: "60%",
+										height: "70%",
+										bgcolor: "background.paper",
+										boxShadow: 24,
+										p: 4,
+										borderRadius: "8px",
+									}}
+								>
+									{previewUrl && (
+										<FilerobotImageEditor
+											source={previewUrl}
+											onBeforeSave={() => {
+												return false;
+											}}
+											onSave={(editedImageObject) => {
+												setPreviewUrl(editedImageObject!.imageBase64);
+												handleCloseEditor();
+											}}
+											onClose={handleCloseEditor}
+											previewPixelRatio={4}
+											savingPixelRatio={4}
+											annotationsCommon={{
+												fill: "#ff0000",
+											}}
+											tabsIds={[TABS.ADJUST, TABS.ANNOTATE, TABS.RESIZE]}
+											defaultTabId={TABS.ANNOTATE}
+											defaultToolId={TOOLS.TEXT}
+										/>
+									)}
+								</Box>
+							</Modal>
 						</>
 					)}
 					<Box>
