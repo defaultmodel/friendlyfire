@@ -1,21 +1,13 @@
 {
-  "$schema": "../gen/schemas/desktop-schema.json",
-  "identifier": "default",
-  "description": "Capability for both windows",
-  "windows": [
-    "main",
-    "slave"
-  ],
-  "permissions": [
-    "core:default",
-    "opener:default",
-    "positioner:default",
-    "core:window:allow-set-size",
-    "core:window:allow-hide",
-    "core:window:allow-show",
-    "core:window:allow-set-position",
-    "core:window:allow-close",
-    "core:webview:allow-create-webview-window",
-    "fs:default"
-  ]
+	"$schema": "../gen/schemas/desktop-schema.json",
+	"identifier": "default",
+	"description": "Capability for both windows",
+	"windows": ["main", "slave"],
+	"permissions": [
+		"core:default",
+		"opener:default",
+		"fs:read-app-specific-dirs-recursive",
+		"clipboard-manager:allow-read-image",
+		"log:default"
+	]
 }
