@@ -22,6 +22,10 @@ import FilerobotImageEditor, {
 	TABS,
 	TOOLS,
 } from "react-filerobot-image-editor";
+import { listen } from "@tauri-apps/api/event";
+import { readFile } from "@tauri-apps/plugin-fs";
+import { readImage } from "@tauri-apps/plugin-clipboard-manager";
+import { warn, debug, trace, info, error } from "@tauri-apps/plugin-log";
 
 const ImageUploader: React.FC = () => {
 	const { socket, socketUrl } = useSocket();
@@ -32,38 +36,90 @@ const ImageUploader: React.FC = () => {
 	const [position, setPosition] = useState<string>("center");
 	const [isEditorOpen, setIsEditorOpen] = useState(false);
 
+	interface FileDropEventPayload {
+		paths: string[];
+	}
+
+	useEffect(() => {
+		trace("Setting up drag-and-drop listener");
+		const unlisten = listen<FileDropEventPayload>(
+			"tauri://drag-drop",
+			async (event) => {
+				if (event.payload.paths as []) {
+					const filePath = event.payload.paths[0] as string;
+					debug(`File dropped: ${filePath}`);
+					try {
+						const fileContent = await readFile(filePath);
+						const fileName = filePath.split("/").pop() || ;
+						const file = new File([fileContent], fileName, {
+							type: "image/*",
+						});
+						setSelectedFile(file);
+						setPreviewUrl(URL.createObjectURL(file));
+						info(`File selected: ${file.name}`);
+					} catch (err: unknown) {
+						if (typeof err === "string") {
+							error(`Error occured while reading chosen file: ${err}`);
+						} else if (err instanceof Error) {
+							error(`Error occured while reading chosen file: ${err.message}`);
+						}
+					}
+				}
+			},
+		);
+
+		return () => {
+			unlisten.then((f) => f());
+			trace("Drag-and-drop listener cleaned up");
+		};
+	}, []);
+
+	useEffect(() => {
+		trace("Setting up paste event listener");
+		addEventListener("paste", async () => {
+			const clipboardText = await readImage();
+			const blob = new Blob([await clipboardText.rgba()]);
+			const objectUrl = URL.createObjectURL(blob);
+			setPreviewUrl(objectUrl);
+			info("Image pasted from clipboard");
+
+			return () => URL.revokeObjectURL(objectUrl);
+		});
+	}, []);
+
 	useEffect(() => {
 		if (!socket) return;
 
-		// Listen for new image events
+		trace("Setting up socket listener for new image events");
 		socket.on("new image", (url: string) => {
-			// Emit a Tauri event to the "slave" window
 			const fullUrl = `${socketUrl}${url}`;
+			debug(`New image event received: ${fullUrl}`);
 			emit("new-image", { url: fullUrl, displayTime, position })
 				.then(() => {
-					console.log("Event emitted to slave window successfully");
+					info("Event emitted to slave window successfully");
 				})
 				.catch((err) => {
-					console.error("Failed to emit event to slave window:", err);
+					error("Failed to emit event to slave window:", err);
 				});
 		});
 
 		return () => {
 			socket.off("new image");
+			trace("Socket listener for new image events cleaned up");
 		};
 	}, [socket, socketUrl, displayTime, position]);
 
-	// When selectedFile changes we update the preview
 	useEffect(() => {
 		if (!selectedFile) {
 			setPreviewUrl(null);
+			trace("Selected file cleared, preview URL reset");
 			return;
 		}
 
 		const objectUrl = URL.createObjectURL(selectedFile);
 		setPreviewUrl(objectUrl);
+		debug(`Preview URL generated for file: ${selectedFile.name}`);
 
-		// Clean up the object URL when the component unmounts or the file changes
 		return () => URL.revokeObjectURL(objectUrl);
 	}, [selectedFile]);
 
@@ -71,16 +127,19 @@ const ImageUploader: React.FC = () => {
 		const file = event.target.files?.[0];
 		if (file) {
 			setSelectedFile(file);
-			setPreviewUrl(URL.createObjectURL(file)); // Create a preview URL
+			setPreviewUrl(URL.createObjectURL(file));
+			info(`File selected via input: ${file.name}`);
 		}
 	};
 
 	const handleEditClick = () => {
 		setIsEditorOpen(true);
+		debug("Image editor opened");
 	};
 
 	const handleCloseEditor = () => {
 		setIsEditorOpen(false);
+		debug("Image editor closed");
 	};
 
 	const base64ToFile = (base64: string, filename: string): File => {
@@ -97,21 +156,22 @@ const ImageUploader: React.FC = () => {
 
 	const handleUpload = async () => {
 		if (!previewUrl) {
+			warn("No file selected for upload");
 			alert("Please select a file first!");
 			return;
 		}
 
 		setUploading(true);
+		info("Starting image upload");
 
 		let fileToUpload: File;
 		if (previewUrl.startsWith("data:image")) {
-			// If the image is edited, convert the base64 URL to a File object
 			fileToUpload = base64ToFile(
 				previewUrl,
 				selectedFile?.name || "edited-image.png",
 			);
+			debug("Edited image converted to file for upload");
 		} else {
-			// If the image is not edited, use the original file
 			fileToUpload = selectedFile!;
 		}
 
@@ -123,10 +183,16 @@ const ImageUploader: React.FC = () => {
 				method: "POST",
 				body: formData,
 			});
-		} catch (error) {
-			console.error("Error uploading image:", error);
+			info("Image uploaded successfully");
+		} catch (err: unknown) {
+			if (typeof err === "string") {
+				error(`Error uploading image: ${err}`);
+			} else if (err instanceof Error) {
+				error(`Error uploading image: ${err.message}`);
+			}
 		} finally {
 			setUploading(false);
+			trace("Upload process completed");
 		}
 	};
 
@@ -218,6 +284,7 @@ const ImageUploader: React.FC = () => {
 											onSave={(editedImageObject) => {
 												setPreviewUrl(editedImageObject!.imageBase64);
 												handleCloseEditor();
+												info("Image edited and saved");
 											}}
 											onClose={handleCloseEditor}
 											previewPixelRatio={4}

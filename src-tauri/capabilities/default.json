@@ -6,12 +6,8 @@
 	"permissions": [
 		"core:default",
 		"opener:default",
-		"positioner:default",
-		"core:window:allow-set-size",
-		"core:window:allow-hide",
-		"core:window:allow-show",
-		"core:window:allow-set-position",
-		"core:window:allow-close",
-		"core:webview:allow-create-webview-window"
+		"fs:read-app-specific-dirs-recursive",
+		"clipboard-manager:allow-read-image",
+		"log:default"
 	]
 }
