@@ -1,7 +1,7 @@
 // App.tsx
 import { moveWindow, Position } from "@tauri-apps/plugin-positioner";
-import ImageUploader from "./components/ImageUploader";
-import LoginForm from "./components/LoginForm";
+import ImageUploader from "./components/image/ImageUploader";
+import LoginForm from "./components/auth/LoginForm";
 import UserList from "./components/UserList";
 import { useSocket } from "./SocketContext";
 
