@@ -1,6 +1,6 @@
 import type React from "react";
 import { useEffect, useState } from "react";
-import { useSocket } from "../../SocketContext";
+import { useSocket } from "../../context/SocketContext";
 import { Box, Button, Typography, Paper, Container } from "@mui/material";
 import { warn, debug, trace, info, error } from "@tauri-apps/plugin-log";
 import { base64ToFile } from "../../../utils/fileUtils";

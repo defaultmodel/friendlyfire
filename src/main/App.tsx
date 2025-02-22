@@ -3,7 +3,7 @@ import { moveWindow, Position } from "@tauri-apps/plugin-positioner";
 import ImageUploader from "./components/image/ImageUploader";
 import LoginForm from "./components/auth/LoginForm";
 import UserList from "./components/UserList";
-import { useSocket } from "./SocketContext";
+import { useSocket } from "./context/SocketContext";
 
 export default function App() {
 	moveWindow(Position.TopLeft);
