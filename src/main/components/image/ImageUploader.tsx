@@ -22,7 +22,7 @@ const ImageUploader: React.FC = () => {
 
 	useDragAndDrop(setSelectedFile, setPreviewUrl);
 	usePaste(setPreviewUrl);
-	useSocketListener(socket, socketUrl, displayTime, position);
+	useSocketListener(socket, socketUrl, position);
 
 	useEffect(() => {
 		if (!selectedFile) {
@@ -58,7 +58,7 @@ const ImageUploader: React.FC = () => {
 	};
 
 	const handleUpload = async () => {
-		if (!previewUrl) {
+		if (!previewUrl || !selectedFile) {
 			warn("No file selected for upload");
 			alert("Please select a file first!");
 			return;
@@ -75,11 +75,12 @@ const ImageUploader: React.FC = () => {
 			);
 			debug("Edited image converted to file for upload");
 		} else {
-			fileToUpload = selectedFile!;
+			fileToUpload = selectedFile;
 		}
 
 		const formData = new FormData();
 		formData.append("image", fileToUpload);
+		formData.append("displayTime", displayTime.toString(10));
 
 		try {
 			await fetch(`${socketUrl}/upload`, {
