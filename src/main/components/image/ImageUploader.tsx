@@ -123,7 +123,6 @@ const ImageUploader: React.FC = () => {
 						<>
 							<ImagePreview
 								imageUrl={previewUrl}
-								fileName={selectedFile.name}
 								onEditClick={handleEditClick}
 							/>
 							<ImageEditorModal

@@ -1,21 +1,18 @@
 import type React from "react";
-import { Box, IconButton, Typography } from "@mui/material";
+import { Box, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 
 interface ImagePreviewProps {
 	imageUrl: string;
-	fileName: string;
 	onEditClick: () => void;
 }
 
 const ImagePreview: React.FC<ImagePreviewProps> = ({
 	imageUrl,
-	fileName,
 	onEditClick,
 }) => {
 	return (
 		<>
-			<Typography variant="body1">Selected File: {fileName}</Typography>
 			<Box
 				sx={{
 					position: "relative",
