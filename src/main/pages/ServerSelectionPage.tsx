@@ -3,42 +3,48 @@ import {
 	Container,
 	Typography,
 	Card,
+	CardActionArea,
 	CardContent,
 	Button,
-	Grid,
 	Dialog,
 	DialogTitle,
 	DialogContent,
 	DialogActions,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
+import AddIcon from "@mui/icons-material/Add";
 import { useServerContext } from "../contexts/ServerContext";
+import type { Server } from "../../types";
+import ServerCard from "../components/ServerCard";
+import AddEditServerDialog from "../components/AddEditServerDialog";
 
 const ServerSelectionPage = () => {
-	const { servers } = useServerContext();
-	const [selectedServerIndex, setSelectedServerIndex] = useState<number | null>(
-		null,
-	);
-	const [openConfirmation, setOpenConfirmation] = useState(false);
+	const { servers, addServer, removeServer, updateServer } = useServerContext();
+	const [selectedServerIndex, setSelectedServerIndex] = useState<
+		number | undefined
+	>(undefined);
 
-	const handleSelectServer = (index: number) => {
-		setSelectedServerIndex(index);
-		setOpenConfirmation(true);
-	};
+	const [openConfirmation, setOpenConfirmation] = useState(false);
+	const [openAddServer, setOpenAddServer] = useState(false);
+	const [openEditServer, setOpenEditServer] = useState(false);
 
 	const handleConfirmSelection = () => {
-		if (selectedServerIndex !== null && servers[selectedServerIndex]) {
-			// Logic to connect to the selected server
+		if (selectedServerIndex !== undefined && servers[selectedServerIndex]) {
 			console.log(
 				`Connecting to server: ${servers[selectedServerIndex].serverName}`,
 			);
 			setOpenConfirmation(false);
-			// Additional logic to handle connection can be added here
 		}
 	};
 
-	const handleCloseConfirmation = () => {
-		setOpenConfirmation(false);
-		setSelectedServerIndex(null);
+	const handleEditServer = (updatedServer: Server) => {
+		if (selectedServerIndex !== undefined) {
+			updateServer(selectedServerIndex, updatedServer);
+			(() => {
+				setOpenEditServer(false);
+				setSelectedServerIndex(undefined);
+			})();
+		}
 	};
 
 	return (
@@ -46,35 +52,56 @@ const ServerSelectionPage = () => {
 			<Typography variant="h4" gutterBottom>
 				Select a Server to Connect
 			</Typography>
-			{servers.length > 0 ? (
-				<Grid container spacing={3}>
-					{servers.map((server, index) => (
-						<Grid item key={index} xs={12} sm={6} md={4}>
-							<Card
-								variant="outlined"
-								onClick={() => handleSelectServer(index)}
+			<Grid container spacing={3}>
+				{servers.map((server, index) => (
+					<Grid key={server.serverName} size={{ xs: 12, sm: 6, md: 4 }}>
+						<ServerCard
+							index={index}
+							onSelect={(index: number) => {
+								setSelectedServerIndex(index);
+								setOpenConfirmation(true);
+							}}
+							onEdit={(index: number) => {
+								setSelectedServerIndex(index);
+								setOpenEditServer(true);
+							}}
+							onDelete={(index: number) => {
+								removeServer(index);
+							}}
+						/>
+					</Grid>
+				))}
+				<Grid size={{ xs: 12, sm: 6, md: 4 }}>
+					<Card variant="outlined">
+						<CardActionArea
+							onClick={() => {
+								setOpenAddServer(true);
+							}}
+						>
+							<CardContent
+								style={{
+									display: "flex",
+									justifyContent: "center",
+									alignItems: "center",
+									height: "100%",
+								}}
 							>
-								<CardContent>
-									<Typography variant="h5" component="div">
-										{server.serverName}
-									</Typography>
-									<Typography variant="body2" color="text.secondary">
-										{server.socketUrl}
-									</Typography>
-								</CardContent>
-							</Card>
-						</Grid>
-					))}
+								<AddIcon fontSize="large" />
+							</CardContent>
+						</CardActionArea>
+					</Card>
 				</Grid>
-			) : (
-				<Typography variant="body1">
-					No servers available. Please add a server first.
-				</Typography>
-			)}
-			<Dialog open={openConfirmation} onClose={handleCloseConfirmation}>
+			</Grid>
+			<Dialog
+				open={openConfirmation}
+				onClose={() => {
+					setOpenConfirmation(false);
+					setSelectedServerIndex(undefined);
+				}}
+			>
 				<DialogTitle>Confirm Selection</DialogTitle>
 				<DialogContent>
-					{selectedServerIndex !== null && servers[selectedServerIndex] ? (
+					{selectedServerIndex !== undefined && servers[selectedServerIndex] ? (
 						<Typography>
 							Are you sure you want to connect to{" "}
 							<strong>{servers[selectedServerIndex].serverName}</strong>?
@@ -84,7 +111,14 @@ const ServerSelectionPage = () => {
 					)}
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={handleCloseConfirmation}>Cancel</Button>
+					<Button
+						onClick={() => {
+							setOpenConfirmation(false);
+							setSelectedServerIndex(undefined);
+						}}
+					>
+						Cancel
+					</Button>
 					<Button
 						variant="contained"
 						color="primary"
@@ -95,6 +129,29 @@ const ServerSelectionPage = () => {
 					</Button>
 				</DialogActions>
 			</Dialog>
+			<AddEditServerDialog
+				open={openAddServer}
+				onClose={() => {
+					setOpenAddServer(false);
+				}}
+				onSave={(newServer: Server) => {
+					addServer(newServer);
+					(() => {
+						setOpenAddServer(false);
+					})();
+				}}
+				title="Add New Server"
+			/>
+			<AddEditServerDialog
+				open={openEditServer}
+				onClose={() => {
+					setOpenEditServer(false);
+					setSelectedServerIndex(undefined);
+				}}
+				onSave={handleEditServer}
+				title="Edit Server"
+				index={selectedServerIndex}
+			/>
 		</Container>
 	);
 };

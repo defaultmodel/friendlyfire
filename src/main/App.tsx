@@ -1,5 +1,6 @@
 import { useServerContext } from "./contexts/ServerContext";
 import GetStartedPage from "./pages/GetStartedPage";
+import ServerSelectionPage from "./pages/ServerSelectionPage";
 
 export default function App() {
 	const { servers, loading } = useServerContext();
@@ -16,9 +17,7 @@ export default function App() {
 
 	return (
 		<main className="app">
-			{servers.map((server) => (
-				<p key={server.serverName}>{server.serverName}</p>
-			))}
+			<ServerSelectionPage />
 		</main>
 	);
 }

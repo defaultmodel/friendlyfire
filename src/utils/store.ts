@@ -8,7 +8,6 @@ export const loadServers = async (): Promise<Server[]> => {
 	try {
 		const store = await load(STORE_PATH);
 		const servers = await store.get<Server[]>(STORE_KEY);
-		console.log(`loadServers ${servers}`);
 		return servers || [];
 	} catch (error) {
 		console.error("Failed to load servers:", error);
@@ -20,7 +19,6 @@ export const saveServers = async (servers: Server[]): Promise<void> => {
 	try {
 		const store = await load(STORE_PATH);
 		await store.set(STORE_KEY, servers);
-		console.log(`setServers ${servers}`);
 	} catch (error) {
 		console.error("Failed to save servers:", error);
 	}
