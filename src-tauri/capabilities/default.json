@@ -1,13 +1,17 @@
 {
-	"$schema": "../gen/schemas/desktop-schema.json",
-	"identifier": "default",
-	"description": "Capability for both windows",
-	"windows": ["main", "slave"],
-	"permissions": [
-		"core:default",
-		"opener:default",
-		"fs:read-app-specific-dirs-recursive",
-		"clipboard-manager:allow-read-image",
-		"log:default"
-	]
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capability for both windows",
+  "windows": [
+    "main",
+    "slave"
+  ],
+  "permissions": [
+    "core:default",
+    "opener:default",
+    "fs:read-app-specific-dirs-recursive",
+    "clipboard-manager:allow-read-image",
+    "log:default",
+    "store:default"
+  ]
 }
