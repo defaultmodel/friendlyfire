@@ -21,7 +21,7 @@ import { useSocket } from "../contexts/SocketContext";
 
 const ServerSelectionPage = () => {
 	const { servers, addServer, removeServer, updateServer } = useServerContext();
-	const { connectSocket } = useSocket();
+	const { connectSocket, errorMessage } = useSocket();
 	const [selectedServerIndex, setSelectedServerIndex] = useState<
 		number | undefined
 	>(undefined);
@@ -60,6 +60,11 @@ const ServerSelectionPage = () => {
 			<Typography variant="h4" gutterBottom>
 				Select a Server to Connect
 			</Typography>
+			{errorMessage && (
+				<Typography color="error" gutterBottom>
+					{errorMessage}
+				</Typography>
+			)}
 			<Grid container spacing={3}>
 				{servers.map((server, index) => (
 					<Grid key={server.serverName} size={{ xs: 12, sm: 6, md: 4 }}>
