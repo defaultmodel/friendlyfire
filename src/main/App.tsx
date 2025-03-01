@@ -1,24 +1,25 @@
-// App.tsx
-import { moveWindow, Position } from "@tauri-apps/plugin-positioner";
-import ImageUploader from "./components/image/ImageUploader";
-import LoginForm from "./components/auth/LoginForm";
-import UserList from "./components/UserList";
-import { useSocket } from "./context/SocketContext";
+import { useServerContext } from "./contexts/ServerContext";
+import { useSocket } from "./contexts/SocketContext";
+import GetStartedPage from "./pages/GetStartedPage";
+import ImageUploaderPage from "./pages/ImageUploaderPage";
+import ServerSelectionPage from "./pages/ServerSelectionPage";
 
 export default function App() {
-	moveWindow(Position.TopLeft);
-
+	const { servers, loading } = useServerContext();
 	const { isConnected } = useSocket();
+	// Show loading state while servers are being loaded
+	if (loading) {
+		return <div>Loading...</div>;
+	}
+
+	// Show the Get Started page if there are no servers
+	if (servers.length === 0) {
+		return <GetStartedPage />;
+	}
+
 	return (
 		<main className="app">
-			{isConnected ? (
-				<>
-					<ImageUploader />
-					<UserList />
-				</>
-			) : (
-				<LoginForm />
-			)}
+			{isConnected ? <ImageUploaderPage /> : <ServerSelectionPage />}
 		</main>
 	);
 }

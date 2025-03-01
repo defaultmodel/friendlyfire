@@ -9,7 +9,7 @@ import {
 	Typography,
 	Paper,
 } from "@mui/material";
-import { useSocket } from "../context/SocketContext";
+import { useSocket } from "../contexts/SocketContext";
 
 const UserList: React.FC = () => {
 	const [users, setUsers] = useState<string[]>([]); // State to store the list of users

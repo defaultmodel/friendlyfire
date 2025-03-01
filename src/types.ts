@@ -2,6 +2,13 @@ export interface FileDropEventPayload {
 	paths: string[];
 }
 
+export interface Server {
+	serverName: string;
+	socketUrl: string;
+	username: string;
+	apiKey: string;
+}
+
 // Comes from type declaration of savedImageData from reac-filerobot-image-editor@4.9.1
 export type savedImageData = {
 	name: string;

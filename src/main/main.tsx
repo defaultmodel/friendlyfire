@@ -1,12 +1,15 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import { SocketProvider } from "./context/SocketContext";
+import { ServerProvider } from "./contexts/ServerContext";
+import { SocketProvider } from "./contexts/SocketContext";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
 	<React.StrictMode>
-		<SocketProvider>
-			<App />
-		</SocketProvider>
+		<ServerProvider>
+			<SocketProvider>
+				<App />
+			</SocketProvider>
+		</ServerProvider>
 	</React.StrictMode>,
 );

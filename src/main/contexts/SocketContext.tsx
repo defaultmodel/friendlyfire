@@ -1,11 +1,10 @@
-// SocketContext.tsx
 import type React from "react";
 import {
 	createContext,
-	useState,
 	useContext,
-	type ReactNode,
+	useState,
 	useEffect,
+	type ReactNode,
 } from "react";
 import { io, type Socket } from "socket.io-client";
 import { version } from "../../../package.json";
@@ -18,6 +17,7 @@ type SocketContextType = {
 	socketUrl: string | null;
 	connectSocket: (serverUrl: string, apiKey: string, username: string) => void;
 	disconnectSocket: () => void;
+	errorMessage: string | null; // Add error message state
 };
 
 const SocketContext = createContext<SocketContextType | null>(null);
@@ -36,8 +36,9 @@ type SocketProviderProps = {
 
 export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 	const [socket, setSocket] = useState<Socket | null>(null);
-	const [isConnected, setIsConnected] = useState(false); // Track connection state
-	const [socketUrl, setSocketUrl] = useState<string | null>(null); // Track the socket URL
+	const [isConnected, setIsConnected] = useState(false);
+	const [socketUrl, setSocketUrl] = useState<string | null>(null);
+	const [errorMessage, setErrorMessage] = useState<string | null>(null); // State for error messages
 
 	const connectSocket = (
 		serverUrl: string,
@@ -47,21 +48,24 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 		const newSocket = io(serverUrl);
 		newSocket.auth = { key: apiKey, username, version: CLIENT_VERSION };
 
-		// Set up event listeners for connection state changes
 		newSocket.on("connect", () => {
 			setIsConnected(true);
-			newSocket.emit("ready"); // Tell the server we are ready to receive messages
-			setSocketUrl(serverUrl); // Update the socket URL when connected
+			newSocket.emit("ready");
+			setSocketUrl(serverUrl);
+			setErrorMessage(null); // Clear any previous error messages
 		});
 
-		newSocket.on("disconnect", () => {
+		newSocket.on("disconnect", (reason) => {
 			setIsConnected(false);
-			setSocketUrl(null); // Clear the socket URL when disconnected
+			setSocketUrl(null);
+			setErrorMessage(`Disconnected: ${reason}`);
 		});
 
-		newSocket.on("connect_error", () => {
+		newSocket.on("connect_error", (error) => {
 			setIsConnected(false);
-			setSocketUrl(null); // Clear the socket URL on connection error
+			newSocket.disconnect(); // Abandon on error
+			setSocketUrl(null);
+			setErrorMessage(`Connection Error: ${error.message}`);
 		});
 
 		setSocket(newSocket);
@@ -72,11 +76,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 			socket.disconnect();
 			setSocket(null);
 			setIsConnected(false);
-			setSocketUrl(null); // Clear the socket URL on disconnect
+			setSocketUrl(null);
+			setErrorMessage(null); // Clear error message on disconnect
 		}
 	};
 
-	// Cleanup socket listeners on unmount
 	useEffect(() => {
 		return () => {
 			if (socket) {
@@ -93,6 +97,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 				socketUrl,
 				connectSocket,
 				disconnectSocket,
+				errorMessage, // Provide error message in context
 			}}
 		>
 			{children}
