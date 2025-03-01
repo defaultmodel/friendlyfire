@@ -83,8 +83,15 @@ const ImageUploaderPage: React.FC = () => {
 		formData.append("image", fileToUpload);
 		formData.append("displayTime", displayTime.toString(10));
 
+		// Ensure the socket URL has a valid scheme for HTTP requests
+		let uploadUrl = socketUrl;
+		if (uploadUrl && !/^https?:\/\//i.test(uploadUrl)) {
+			uploadUrl = `http://${uploadUrl}`;
+			trace(`uploadUrl: ${uploadUrl}`);
+		}
+
 		try {
-			const response = await fetch(`${socketUrl}/upload`, {
+			const response = await fetch(`${uploadUrl}/upload`, {
 				method: "POST",
 				body: formData,
 			});
