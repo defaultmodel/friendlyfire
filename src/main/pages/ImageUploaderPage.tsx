@@ -10,6 +10,7 @@ import { useDragAndDrop } from "../hooks/useDragDropImage.tsx";
 import { usePaste } from "../hooks/usePasteImage";
 import { useSocketListener } from "../hooks/useSocketListener";
 import { useSocket } from "../contexts/SocketContext";
+import Menu from "../components/Menu.tsx";
 
 const ImageUploaderPage: React.FC = () => {
 	const { socket, socketUrl } = useSocket();
@@ -106,56 +107,59 @@ const ImageUploaderPage: React.FC = () => {
 	};
 
 	return (
-		<Container maxWidth="sm">
-			<Paper elevation={3} sx={{ padding: 4, marginTop: 4 }}>
-				<Typography variant="h4" component="h1" align="center" gutterBottom>
-					Upload Image
-				</Typography>
-				<Box
-					component="form"
-					sx={{ display: "flex", flexDirection: "column", gap: 3 }}
-				>
-					<Button variant="contained" component="label">
-						Upload File
-						<input
-							type="file"
-							accept="image/*"
-							hidden
-							onChange={handleFileChange}
+		<>
+			<Menu />
+			<Container maxWidth="sm">
+				<Paper elevation={3} sx={{ padding: 4, marginTop: 4 }}>
+					<Typography variant="h4" component="h1" align="center" gutterBottom>
+						Upload Image
+					</Typography>
+					<Box
+						component="form"
+						sx={{ display: "flex", flexDirection: "column", gap: 3 }}
+					>
+						<Button variant="contained" component="label">
+							Upload File
+							<input
+								type="file"
+								accept="image/*"
+								hidden
+								onChange={handleFileChange}
+							/>
+						</Button>
+						{selectedFile && previewUrl && (
+							<>
+								<ImagePreview
+									imageUrl={previewUrl}
+									onEditClick={handleEditClick}
+								/>
+								<ImageEditorModal
+									isOpen={isEditorOpen}
+									onClose={handleCloseEditor}
+									imageUrl={previewUrl}
+									onSave={(editedImageObject) => {
+										if (editedImageObject.imageBase64) {
+											setPreviewUrl(editedImageObject.imageBase64);
+											handleCloseEditor();
+											info("Image edited and saved");
+										}
+									}}
+								/>
+							</>
+						)}
+						<UploadControls
+							displayTime={displayTime}
+							position={position}
+							onDisplayTimeChange={setDisplayTime}
+							onPositionChange={setPosition}
+							onUploadClick={handleUpload}
+							uploading={uploading}
+							selectedFile={selectedFile}
 						/>
-					</Button>
-					{selectedFile && previewUrl && (
-						<>
-							<ImagePreview
-								imageUrl={previewUrl}
-								onEditClick={handleEditClick}
-							/>
-							<ImageEditorModal
-								isOpen={isEditorOpen}
-								onClose={handleCloseEditor}
-								imageUrl={previewUrl}
-								onSave={(editedImageObject) => {
-									if (editedImageObject.imageBase64) {
-										setPreviewUrl(editedImageObject.imageBase64);
-										handleCloseEditor();
-										info("Image edited and saved");
-									}
-								}}
-							/>
-						</>
-					)}
-					<UploadControls
-						displayTime={displayTime}
-						position={position}
-						onDisplayTimeChange={setDisplayTime}
-						onPositionChange={setPosition}
-						onUploadClick={handleUpload}
-						uploading={uploading}
-						selectedFile={selectedFile}
-					/>
-				</Box>
-			</Paper>
-		</Container>
+					</Box>
+				</Paper>
+			</Container>
+		</>
 	);
 };
 
