@@ -17,9 +17,11 @@ import { useServerContext } from "../contexts/ServerContext";
 import type { Server } from "../../types";
 import ServerCard from "../components/ServerCard";
 import AddEditServerDialog from "../components/AddEditServerDialog";
+import { useSocket } from "../contexts/SocketContext";
 
 const ServerSelectionPage = () => {
 	const { servers, addServer, removeServer, updateServer } = useServerContext();
+	const { connectSocket } = useSocket();
 	const [selectedServerIndex, setSelectedServerIndex] = useState<
 		number | undefined
 	>(undefined);
@@ -33,6 +35,12 @@ const ServerSelectionPage = () => {
 			console.log(
 				`Connecting to server: ${servers[selectedServerIndex].serverName}`,
 			);
+
+			const socketUrl = servers[selectedServerIndex].socketUrl;
+			const apiKey = servers[selectedServerIndex].apiKey;
+			const username = servers[selectedServerIndex].username;
+
+			connectSocket(socketUrl, apiKey, username);
 			setOpenConfirmation(false);
 		}
 	};
