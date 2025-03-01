@@ -58,10 +58,60 @@ const ImageUploaderPage: React.FC = () => {
 		debug("Image editor closed");
 	};
 
+	const getUploadUrl = (socketUrl: string) => {
+		let uploadUrl = socketUrl;
+
+		// Ensure the socket URL has a valid scheme for HTTP requests
+		if (!/^https?:\/\//i.test(uploadUrl)) {
+			uploadUrl = `https://${uploadUrl}`;
+		}
+
+		return uploadUrl;
+	};
+
+	const uploadImage = async (uploadUrl: string, formData: FormData) => {
+		try {
+			const response = await fetch(`${uploadUrl}/upload`, {
+				method: "POST",
+				body: formData,
+			});
+
+			if (!response.ok) {
+				throw new Error(`Upload failed with status: ${response.status}`);
+			}
+
+			info("Image uploaded successfully using HTTPS");
+		} catch (err: unknown) {
+			if (uploadUrl.startsWith("https://")) {
+				// Fallback to http if https fails
+				const httpUrl = uploadUrl.replace("https://", "http://");
+				const fallbackResponse = await fetch(`${httpUrl}/upload`, {
+					method: "POST",
+					body: formData,
+				});
+
+				if (!fallbackResponse.ok) {
+					throw new Error(
+						`Upload failed with status: ${fallbackResponse.status}`,
+					);
+				}
+
+				info("Image uploaded successfully using HTTP fallback");
+			} else {
+				throw new Error(`Error uploading image: ${(err as Error).message}`);
+			}
+		}
+	};
+
 	const handleUpload = async () => {
 		if (!previewUrl || !selectedFile) {
 			warn("No file selected for upload");
 			alert("Please select a file first!");
+			return;
+		}
+
+		if (!socketUrl) {
+			warn("No socketUrl, unable to upload");
 			return;
 		}
 
@@ -83,24 +133,10 @@ const ImageUploaderPage: React.FC = () => {
 		formData.append("image", fileToUpload);
 		formData.append("displayTime", displayTime.toString(10));
 
-		// Ensure the socket URL has a valid scheme for HTTP requests
-		let uploadUrl = socketUrl;
-		if (uploadUrl && !/^https?:\/\//i.test(uploadUrl)) {
-			uploadUrl = `http://${uploadUrl}`;
-			trace(`uploadUrl: ${uploadUrl}`);
-		}
+		const uploadUrl = getUploadUrl(socketUrl);
 
 		try {
-			const response = await fetch(`${uploadUrl}/upload`, {
-				method: "POST",
-				body: formData,
-			});
-
-			if (!response.ok) {
-				throw new Error(`Upload failed with status: ${response.status}`);
-			}
-
-			info("Image uploaded successfully");
+			await uploadImage(uploadUrl, formData);
 		} catch (err: unknown) {
 			if (typeof err === "string") {
 				error(`Error uploading image: ${err}`);
