@@ -2,7 +2,6 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { Box, Button, Typography, Paper, Container } from "@mui/material";
 import { warn, debug, trace, info, error } from "@tauri-apps/plugin-log";
-import { base64ToFile } from "../../utils/fileUtils.ts";
 import UploadControls from "../components/ImageUploadControls.tsx";
 import ImagePreview from "../components/ImagePreview";
 import ImageEditorModal from "../components/ImageEditorModal";
@@ -12,6 +11,11 @@ import { useSocketListener } from "../hooks/useSocketListener";
 import { useSocket } from "../contexts/SocketContext";
 import Menu from "../components/Menu.tsx";
 import { useSnackbar } from "../contexts/SnackbarContext.tsx";
+import {
+	getUploadUrl,
+	prepareFileForUpload,
+	uploadImage,
+} from "../../utils/uploadUtils.ts";
 
 const ImageUploaderPage: React.FC = () => {
 	const { socket, socketUrl } = useSocket();
@@ -60,51 +64,6 @@ const ImageUploaderPage: React.FC = () => {
 		debug("Image editor closed");
 	};
 
-	const getUploadUrl = (socketUrl: string) => {
-		let uploadUrl = socketUrl;
-
-		// Ensure the socket URL has a valid scheme for HTTP requests
-		if (!/^https?:\/\//i.test(uploadUrl)) {
-			uploadUrl = `https://${uploadUrl}`;
-		}
-
-		return uploadUrl;
-	};
-
-	const uploadImage = async (uploadUrl: string, formData: FormData) => {
-		try {
-			const response = await fetch(`${uploadUrl}/upload`, {
-				method: "POST",
-				body: formData,
-			});
-
-			if (!response.ok) {
-				throw new Error(`Upload failed with status: ${response.status}`);
-			}
-
-			info("Image uploaded successfully using HTTPS");
-		} catch (err: unknown) {
-			if (uploadUrl.startsWith("https://")) {
-				// Fallback to http if https fails
-				const httpUrl = uploadUrl.replace("https://", "http://");
-				const fallbackResponse = await fetch(`${httpUrl}/upload`, {
-					method: "POST",
-					body: formData,
-				});
-
-				if (!fallbackResponse.ok) {
-					throw new Error(
-						`Upload failed with status: ${fallbackResponse.status}`,
-					);
-				}
-
-				info("Image uploaded successfully using HTTP fallback");
-			} else {
-				throw new Error(`Error uploading image: ${(err as Error).message}`);
-			}
-		}
-	};
-
 	const handleUpload = async () => {
 		if (!previewUrl || !selectedFile) {
 			warn("No file selected for upload");
@@ -120,16 +79,7 @@ const ImageUploaderPage: React.FC = () => {
 		setUploading(true);
 		info("Starting image upload");
 
-		let fileToUpload: File;
-		if (previewUrl.startsWith("data:image")) {
-			fileToUpload = base64ToFile(
-				previewUrl,
-				selectedFile?.name || "edited-image.png",
-			);
-			debug("Edited image converted to file for upload");
-		} else {
-			fileToUpload = selectedFile;
-		}
+		const fileToUpload = prepareFileForUpload(previewUrl, selectedFile);
 
 		const formData = new FormData();
 		formData.append("image", fileToUpload);
@@ -140,7 +90,7 @@ const ImageUploaderPage: React.FC = () => {
 		try {
 			await uploadImage(uploadUrl, formData);
 		} catch (err: unknown) {
-			const errorMessage = err instanceof Error ? err.message : err;
+			const errorMessage = err instanceof Error ? err.message : String(err);
 			error(`Error uploading image: ${errorMessage}`);
 			showSnackbar(`Error uploading image: ${errorMessage}`, "error");
 		} finally {
