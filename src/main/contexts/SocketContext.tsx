@@ -16,7 +16,11 @@ type SocketContextType = {
 	socket: Socket | null;
 	isConnected: boolean;
 	socketUrl: string | null;
-	connectSocket: (serverUrl: string, apiKey: string, username: string) => void;
+	connectSocket: (
+		serverUrl: string,
+		apiKey: string,
+		username: string,
+	) => Promise<void>;
 	disconnectSocket: () => void;
 };
 
@@ -40,33 +44,38 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 	const [isConnected, setIsConnected] = useState(false);
 	const [socketUrl, setSocketUrl] = useState<string | null>(null);
 
-	const connectSocket = (
+	const connectSocket = async (
 		serverUrl: string,
 		apiKey: string,
 		username: string,
 	) => {
-		const newSocket = io(serverUrl);
-		newSocket.auth = { key: apiKey, username, version: CLIENT_VERSION };
+		return new Promise<void>((resolve, reject) => {
+			const newSocket = io(serverUrl);
+			newSocket.auth = { key: apiKey, username, version: CLIENT_VERSION };
 
-		newSocket.on("connect", () => {
-			setIsConnected(true);
-			newSocket.emit("ready");
-			setSocketUrl(serverUrl);
+			newSocket.on("connect", () => {
+				setIsConnected(true);
+				newSocket.emit("ready");
+				setSocketUrl(serverUrl);
+				resolve();
+			});
+
+			newSocket.on("disconnect", () => {
+				setIsConnected(false);
+				setSocketUrl(null);
+				resolve();
+			});
+
+			newSocket.on("connect_error", (error) => {
+				newSocket.disconnect();
+				setIsConnected(false);
+				setSocketUrl(null);
+				showSnackbar(`Connection Error: ${error.message}`, "error");
+				reject(new Error(`Connection Error: ${error.message}`));
+			});
+
+			setSocket(newSocket);
 		});
-
-		newSocket.on("disconnect", () => {
-			setIsConnected(false);
-			setSocketUrl(null);
-		});
-
-		newSocket.on("connect_error", (error) => {
-			setIsConnected(false);
-			newSocket.disconnect(); // Abandon on error
-			setSocketUrl(null);
-			showSnackbar(`Connection Error: ${error.message}`, "error");
-		});
-
-		setSocket(newSocket);
 	};
 
 	const disconnectSocket = () => {
