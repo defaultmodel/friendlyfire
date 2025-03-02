@@ -3,6 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 import { readFile } from "@tauri-apps/plugin-fs";
 import { debug, info, error, trace } from "@tauri-apps/plugin-log";
 import type { FileDropEventPayload } from "../../types";
+import { useSnackbar } from "../contexts/SnackbarContext";
 
 export const useDragAndDrop = (
 	setSelectedFile: (file: File) => void,
@@ -12,6 +13,8 @@ export const useDragAndDrop = (
 		const unlisten = listen<FileDropEventPayload>(
 			"tauri://drag-drop",
 			async (event) => {
+				const { showSnackbar } = useSnackbar();
+
 				if (event.payload.paths as []) {
 					const filePath = event.payload.paths[0] as string;
 					debug(`File dropped: ${filePath}`);
@@ -23,11 +26,9 @@ export const useDragAndDrop = (
 						setPreviewUrl(URL.createObjectURL(file));
 						info(`File selected: ${file.name}`);
 					} catch (err: unknown) {
-						if (typeof err === "string") {
-							error(`Error occurred while reading chosen file: ${err}`);
-						} else if (err instanceof Error) {
-							error(`Error occurred while reading chosen file: ${err.message}`);
-						}
+						const errorMessage = err instanceof Error ? err.message : err;
+						error(`Error uploading image: ${errorMessage}`);
+						showSnackbar(`Error uploading image: ${errorMessage}`, "error");
 					}
 				}
 			},

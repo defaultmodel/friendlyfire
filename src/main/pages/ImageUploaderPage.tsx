@@ -11,9 +11,11 @@ import { usePaste } from "../hooks/usePasteImage";
 import { useSocketListener } from "../hooks/useSocketListener";
 import { useSocket } from "../contexts/SocketContext";
 import Menu from "../components/Menu.tsx";
+import { useSnackbar } from "../contexts/SnackbarContext.tsx";
 
 const ImageUploaderPage: React.FC = () => {
 	const { socket, socketUrl } = useSocket();
+	const { showSnackbar } = useSnackbar();
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 	const [uploading, setUploading] = useState<boolean>(false);
@@ -106,7 +108,7 @@ const ImageUploaderPage: React.FC = () => {
 	const handleUpload = async () => {
 		if (!previewUrl || !selectedFile) {
 			warn("No file selected for upload");
-			alert("Please select a file first!");
+			showSnackbar("Please select a file first!", "warning");
 			return;
 		}
 
@@ -138,11 +140,9 @@ const ImageUploaderPage: React.FC = () => {
 		try {
 			await uploadImage(uploadUrl, formData);
 		} catch (err: unknown) {
-			if (typeof err === "string") {
-				error(`Error uploading image: ${err}`);
-			} else if (err instanceof Error) {
-				error(`Error uploading image: ${err.message}`);
-			}
+			const errorMessage = err instanceof Error ? err.message : err;
+			error(`Error uploading image: ${errorMessage}`);
+			showSnackbar(`Error uploading image: ${errorMessage}`, "error");
 		} finally {
 			setUploading(false);
 			trace("Upload process completed");

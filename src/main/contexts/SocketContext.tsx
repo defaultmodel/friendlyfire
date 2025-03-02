@@ -8,6 +8,7 @@ import {
 } from "react";
 import { io, type Socket } from "socket.io-client";
 import { version } from "../../../package.json";
+import { useSnackbar } from "./SnackbarContext";
 
 const CLIENT_VERSION = version;
 
@@ -17,7 +18,6 @@ type SocketContextType = {
 	socketUrl: string | null;
 	connectSocket: (serverUrl: string, apiKey: string, username: string) => void;
 	disconnectSocket: () => void;
-	errorMessage: string | null; // Add error message state
 };
 
 const SocketContext = createContext<SocketContextType | null>(null);
@@ -35,10 +35,10 @@ type SocketProviderProps = {
 };
 
 export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
+	const { showSnackbar } = useSnackbar();
 	const [socket, setSocket] = useState<Socket | null>(null);
 	const [isConnected, setIsConnected] = useState(false);
 	const [socketUrl, setSocketUrl] = useState<string | null>(null);
-	const [errorMessage, setErrorMessage] = useState<string | null>(null); // State for error messages
 
 	const connectSocket = (
 		serverUrl: string,
@@ -52,20 +52,18 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 			setIsConnected(true);
 			newSocket.emit("ready");
 			setSocketUrl(serverUrl);
-			setErrorMessage(null); // Clear any previous error messages
 		});
 
-		newSocket.on("disconnect", (reason) => {
+		newSocket.on("disconnect", () => {
 			setIsConnected(false);
 			setSocketUrl(null);
-			setErrorMessage(`Disconnected: ${reason}`);
 		});
 
 		newSocket.on("connect_error", (error) => {
 			setIsConnected(false);
 			newSocket.disconnect(); // Abandon on error
 			setSocketUrl(null);
-			setErrorMessage(`Connection Error: ${error.message}`);
+			showSnackbar(`Connection Error: ${error.message}`, "error");
 		});
 
 		setSocket(newSocket);
@@ -77,7 +75,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 			setSocket(null);
 			setIsConnected(false);
 			setSocketUrl(null);
-			setErrorMessage(null); // Clear error message on disconnect
 		}
 	};
 
@@ -97,7 +94,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 				socketUrl,
 				connectSocket,
 				disconnectSocket,
-				errorMessage, // Provide error message in context
 			}}
 		>
 			{children}
