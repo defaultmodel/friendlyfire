@@ -2,21 +2,28 @@ import ReactDOM from "react-dom/client";
 import React, { useEffect, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
+import { Avatar } from "@mui/material";
+
+interface Media {
+	url: string;
+	displayTime: number;
+	username: string;
+}
 
 const SlaveApp: React.FC = () => {
 	const [imageUrl, setImageUrl] = useState<string | null>(null);
 	const [timer, setTimer] = useState<number | null>(null);
+	const [username, setUsername] = useState<string | null>(null);
 
 	useEffect(() => {
 		// Listen for the "new-image-event" event
 		const unlisten = listen("new-image", async (event) => {
-			const { url, displayTime } = event.payload as {
-				url: string;
-				displayTime: number;
-			};
+			const { url, displayTime, username } = event.payload as Media;
+			console.log(username);
 			const window = getCurrentWindow();
 			window.show();
 			setImageUrl(url); // Update the image URL state
+			setUsername(username);
 
 			// Resize the window to match the image's aspect ratio
 			const img = new Image();
@@ -38,8 +45,6 @@ const SlaveApp: React.FC = () => {
 					newHeight = Math.min(img.height, maxSize);
 					newWidth = newHeight * aspectRatio;
 				}
-
-				console.log(`${newWidth} ${newHeight}`);
 
 				// Get the current window and set its size
 				await window.setSize(new LogicalSize(newWidth, newHeight));
@@ -68,8 +73,15 @@ const SlaveApp: React.FC = () => {
 		};
 	}, [timer]);
 
+	console.log(username);
+
 	return (
-		<>
+		<div style={{ position: "relative" }}>
+			{username && (
+				<div style={{ position: "absolute", top: 10, left: 10 }}>
+					<Avatar>{username[0].toUpperCase()}</Avatar>
+				</div>
+			)}
 			{imageUrl ? (
 				<img
 					src={imageUrl}
@@ -79,7 +91,7 @@ const SlaveApp: React.FC = () => {
 			) : (
 				<p>No image received yet.</p>
 			)}
-		</>
+		</div>
 	);
 };
 

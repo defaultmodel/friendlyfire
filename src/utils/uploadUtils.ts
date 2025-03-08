@@ -7,7 +7,7 @@ export const getUploadUrl = (socketUrl: string) => {
 
 	// Ensure the socket URL has a valid scheme for HTTP requests
 	if (!/^https?:\/\//i.test(uploadUrl)) {
-		uploadUrl = `https://${uploadUrl}`;
+		uploadUrl = `http://${uploadUrl}`;
 	}
 
 	return uploadUrl;

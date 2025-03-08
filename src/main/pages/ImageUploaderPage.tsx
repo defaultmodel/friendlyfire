@@ -16,6 +16,7 @@ import {
 	prepareFileForUpload,
 	uploadImage,
 } from "../../utils/uploadUtils.ts";
+import UserList from "../components/UserList.tsx";
 
 const ImageUploaderPage: React.FC = () => {
 	const { socket, socketUrl } = useSocket();
@@ -29,7 +30,7 @@ const ImageUploaderPage: React.FC = () => {
 
 	useDragAndDrop(setSelectedFile, setPreviewUrl);
 	usePaste(setPreviewUrl);
-	useSocketListener(socket, socketUrl, position);
+	useSocketListener(socket, socketUrl);
 
 	useEffect(() => {
 		if (!selectedFile) {
@@ -84,6 +85,8 @@ const ImageUploaderPage: React.FC = () => {
 		const formData = new FormData();
 		formData.append("image", fileToUpload);
 		formData.append("displayTime", displayTime.toString(10));
+		formData.append("position", position);
+		formData.append("username", socket!.auth!.username);
 
 		const uploadUrl = getUploadUrl(socketUrl);
 
