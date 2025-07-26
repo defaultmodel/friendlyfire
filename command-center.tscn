@@ -1,0 +1,59 @@
+[gd_scene load_steps=3 format=3 uid="uid://v2us3m2g2hcq"]
+
+[ext_resource type="Script" uid="uid://brwri8fju2n8r" path="res://command_center.gd" id="1_cv7k2"]
+
+[sub_resource type="VideoStreamTheora" id="VideoStreamTheora_5uiyd"]
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_cv7k2")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.996771
+anchor_bottom = 0.994185
+offset_right = 6.19995
+offset_bottom = 6.28003
+metadata/_edit_use_anchors_ = true
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Margin/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MenuButton" type="MenuButton" parent="Margin/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "LA BITE"
+
+[node name="TextureButton" type="TextureButton" parent="Margin/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Margin/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "À Dudule"
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="Margin/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2.5
+
+[node name="VideoStreamPlayer" type="VideoStreamPlayer" parent="Margin/VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.0
+stream = SubResource("VideoStreamTheora_5uiyd")
+
+[node name="TextureButton" type="TextureButton" parent="Margin/VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
