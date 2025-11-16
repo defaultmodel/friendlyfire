@@ -1,0 +1,7 @@
+# Usual rust artifacts
+target/
+
+# Local rust artifacts installation
+# REFERENCE: flake.nix shellHook
+.cargo
+.rustup

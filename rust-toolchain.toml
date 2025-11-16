@@ -1,0 +1,16 @@
+[toolchain]
+channel = "1.91" # Avoid specifying a patch version here; see https://github.com/emilk/eframe_template/issues/145
+components = [
+  "rustc",
+  "cargo",
+  "rust-std",
+  "rust-src",
+  "rust-docs",
+  "clippy",
+  "rustfmt",
+  "rust-analyzer",
+]
+# If in a nix devShell :
+# First target is the default for the cargo build
+# REFERENCE: This is handled by flake.nix
+targets = [ "x86_64-pc-windows-gnu" ]
