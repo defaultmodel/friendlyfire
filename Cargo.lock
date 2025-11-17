@@ -3,7 +3,19 @@
 version = 4
 
 [[package]]
-name = "friendlyfire-receiver"
+name = "friendlyfire-command-center"
+version = "0.1.0"
+
+[[package]]
+name = "friendlyfire-server"
+version = "0.1.0"
+
+[[package]]
+name = "friendlyfire-shared-lib"
+version = "0.1.0"
+
+[[package]]
+name = "friendlyfire-splash-screen"
 version = "0.1.0"
 dependencies = [
  "windows",

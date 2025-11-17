@@ -1,11 +1,11 @@
 use windows::{
+    core::*,
     Win32::{
         Foundation::*,
         Graphics::{Direct2D::*, Gdi::*},
         System::{Com::*, LibraryLoader::*},
         UI::WindowsAndMessaging::*,
     },
-    core::*,
 };
 
 unsafe fn init_direct2d() -> Result<ID2D1Factory> {
