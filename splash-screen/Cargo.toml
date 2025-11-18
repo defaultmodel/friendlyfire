@@ -14,11 +14,14 @@ lto = true
 codegen-units = 1
 
 [dependencies]
+image = "0.25.9"
 windows = { version = "0.57", features = [
   "Win32_UI_WindowsAndMessaging",
   "Win32_System_Com",
   "Win32_Graphics_Imaging",
   "Win32_Graphics_Direct2D",
+  "Win32_Graphics_Direct2D_Common",
+  "Win32_Graphics_Dxgi_Common",
   "Win32_Graphics_Gdi",
   "Win32_System_LibraryLoader",
 ] }
