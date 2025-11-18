@@ -36,7 +36,7 @@ impl App {
             )
             .into()
             {
-                TranslateMessage(&msg).unwrap();
+                let _ = TranslateMessage(&msg);
                 DispatchMessageA(&msg);
             }
         }
