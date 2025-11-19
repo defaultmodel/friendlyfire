@@ -92,6 +92,14 @@ unsafe fn update_layered(win: &Window, mem_dc: HDC, width: u32, height: u32) {
         cy: height as i32,
     };
 
+    let screen_width = unsafe { GetSystemMetrics(SM_CXSCREEN) };
+    let screen_height = unsafe { GetSystemMetrics(SM_CYSCREEN) };
+
+    let center_position = POINT {
+        x: (screen_width - width as i32) / 2,
+        y: (screen_height - height as i32) / 2,
+    };
+
     let zero_position = POINT { x: 0, y: 0 };
 
     let blend = BLENDFUNCTION {
@@ -105,7 +113,7 @@ unsafe fn update_layered(win: &Window, mem_dc: HDC, width: u32, height: u32) {
         UpdateLayeredWindow(
             win.handle,
             screen_dc,
-            Some(&zero_position),
+            Some(&center_position),
             Some(&size),
             mem_dc,
             Some(&zero_position),
