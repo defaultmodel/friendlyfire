@@ -1,6 +1,5 @@
-use std::sync::Mutex;
 use windows::{
-    Win32::{Foundation::*, Graphics::Direct2D::*, UI::WindowsAndMessaging::*},
+    Win32::{Foundation::*, UI::WindowsAndMessaging::*},
     core::*,
 };
 
@@ -16,9 +15,6 @@ pub trait SplashWindow {
 
 pub struct Window {
     pub handle: HWND,
-    pub direct2d_factory: ID2D1Factory,
-    pub render_target: Mutex<Option<ID2D1HwndRenderTarget>>,
-    pub bitmap: Mutex<Option<ID2D1Bitmap>>,
 }
 
 impl SplashWindow for Window {
@@ -29,13 +25,8 @@ impl SplashWindow for Window {
         let instance = unsafe { winapi::register_window_class(class_name).unwrap() };
         let window_handle = unsafe { winapi::create_window(class_name, instance).unwrap() };
 
-        let direct2d_factory = rendering::create_factory();
-
         Self {
             handle: window_handle,
-            direct2d_factory,
-            render_target: Mutex::new(None),
-            bitmap: Mutex::new(None),
         }
     }
 

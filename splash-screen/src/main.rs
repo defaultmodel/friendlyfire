@@ -20,10 +20,11 @@ impl App {
             Self::initialize()?;
         }
         let window = window::Window::new();
-        window.show();
 
         let image_bytes = fs::read("bonk.png")?;
         window.update_image(&image_bytes);
+
+        window.show();
 
         // Basic Win32 message loop
         unsafe {
