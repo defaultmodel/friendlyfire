@@ -24,6 +24,7 @@ pub unsafe fn create_layered_window(classname: PCSTR, window_instance: HINSTANCE
     unsafe {
         let window_extended_style = WS_EX_LAYERED |
             WS_EX_TOPMOST | // always-on-top
+            WS_EX_NOACTIVATE | // click-through
             WS_EX_TOOLWINDOW; // remove taskbar icon
         let window_style = WS_POPUP | WS_VISIBLE;
 
