@@ -6,99 +6,36 @@ use windows::Win32::{Foundation::*, Graphics::Gdi::*, UI::WindowsAndMessaging::*
 use super::splash_window::Window;
 
 pub fn update_image(win: &Window, bytes: &[u8]) {
-    // ---------- decode PNG as RGBA ----------
-    let decoded = ImageReader::new(Cursor::new(bytes))
+    let image_rgba8 = ImageReader::new(Cursor::new(bytes))
         .with_guessed_format()
         .unwrap()
         .decode()
         .unwrap()
         .to_rgba8();
 
-    let (width, height) = decoded.dimensions();
-    let rgba = decoded.into_raw();
-
-    // ---------- convert to premultiplied BGRA ----------
-    let bgra = rgba_to_premultiplied_bgra(&rgba);
+    let (width, height) = image_rgba8.dimensions();
+    let bgra = rgba_to_premultiplied_bgra(&image_rgba8);
 
     unsafe {
-        // ---------- prepare memory DC & bitmap ----------
         let hdc_screen = GetDC(HWND(0));
-        let mem_dc = CreateCompatibleDC(GetDC(HWND(0)));
+        let mem_dc = CreateCompatibleDC(hdc_screen);
         ReleaseDC(HWND(0), hdc_screen);
 
-        let bitmap_info = BITMAPINFO {
-            bmiHeader: BITMAPINFOHEADER {
-                biSize: size_of::<BITMAPINFOHEADER>() as u32,
-                biWidth: width as i32,
-                biHeight: -(height as i32), // A top-down DIB, in which the origin lies at the upper-left corner.
-                biPlanes: 1,
-                biBitCount: 32,
-                biCompression: BI_RGB.0,
-                ..Default::default()
-            },
-            ..Default::default()
-        };
-
-        let mut bitmap_ptr: *mut c_void = ptr::null_mut();
-
-        let dib = CreateDIBSection(
-            mem_dc,
-            &bitmap_info,
-            DIB_RGB_COLORS,
-            &mut bitmap_ptr,
-            None,
-            0,
-        )
-        .unwrap();
-
-        // copy BGRA pixels → DIB buffer
-        ptr::copy_nonoverlapping(bgra.as_ptr(), bitmap_ptr as *mut u8, bgra.len());
-
+        let dib = create_dib_section(mem_dc, width, height, &bgra);
         let old = SelectObject(mem_dc, dib);
 
-        // ---------- prepare UpdateLayeredWindow params ----------
-        let size = SIZE {
-            cx: width as i32,
-            cy: height as i32,
-        };
+        update_layered(win, mem_dc, width, height);
 
-        let pos = POINT { x: 0, y: 0 };
-
-        let src = POINT { x: 0, y: 0 };
-
-        // QUESTION: What will this do if the image as not alpha channel ?
-        let blend = BLENDFUNCTION {
-            BlendOp: AC_SRC_OVER as u8,
-            BlendFlags: 0,
-            SourceConstantAlpha: 255,
-            AlphaFormat: AC_SRC_ALPHA as u8,
-        };
-
-        // ---------- Update the layered window ----------
-        let hdc_screen_again = GetDC(HWND(0));
-        UpdateLayeredWindow(
-            win.handle,
-            hdc_screen_again,
-            Some(&pos),
-            Some(&size),
-            mem_dc,
-            Some(&src),
-            COLORREF::default(),
-            Some(&blend),
-            ULW_ALPHA,
-        )
-        .unwrap();
-        ReleaseDC(HWND(0), hdc_screen_again);
-
-        // cleanup
+        // Cleanup
         SelectObject(mem_dc, old);
-        DeleteDC(mem_dc);
-        ReleaseDC(HWND(0), hdc_screen_again);
-
-        // if res.is_err() {
-        //     eprintln!("UpdateLayeredWindow failed: {:?}", GetLastError());
-        //     res.unwrap();
-        // }
+        if let BOOL(0) = DeleteObject(dib) {
+            eprintln!("Unable to delete object");
+            panic!();
+        }
+        if let BOOL(0) = DeleteDC(mem_dc) {
+            eprintln!("Unable to delete DC");
+            panic!();
+        }
     }
 }
 
@@ -114,10 +51,69 @@ pub fn rgba_to_premultiplied_bgra(src: &[u8]) -> Vec<u8> {
             let r_p = ((r * a + 127) / 255) as u8;
             let g_p = ((g * a + 127) / 255) as u8;
             let b_p = ((b * a + 127) / 255) as u8;
-
             bgra.extend_from_slice(&[b_p, g_p, r_p, a as u8]);
         }
     }
 
     bgra
+}
+
+unsafe fn create_dib_section(mem_dc: HDC, width: u32, height: u32, bgra: &[u8]) -> HBITMAP {
+    let header = BITMAPINFOHEADER {
+        biSize: size_of::<BITMAPINFOHEADER>() as u32,
+        biWidth: width as i32,
+        biHeight: -(height as i32),
+        biPlanes: 1,
+        biBitCount: 32,
+        biCompression: BI_RGB.0,
+        ..Default::default()
+    };
+
+    let info = BITMAPINFO {
+        bmiHeader: header,
+        ..Default::default()
+    };
+
+    let mut out_ptr: *mut c_void = ptr::null_mut();
+
+    let bitmap =
+        unsafe { CreateDIBSection(mem_dc, &info, DIB_RGB_COLORS, &mut out_ptr, None, 0).unwrap() };
+
+    unsafe { ptr::copy_nonoverlapping(bgra.as_ptr(), out_ptr as *mut u8, bgra.len()) };
+
+    bitmap
+}
+
+unsafe fn update_layered(win: &Window, mem_dc: HDC, width: u32, height: u32) {
+    let screen_dc = unsafe { GetDC(HWND(0)) };
+
+    let size = SIZE {
+        cx: width as i32,
+        cy: height as i32,
+    };
+
+    let zero_position = POINT { x: 0, y: 0 };
+
+    let blend = BLENDFUNCTION {
+        BlendOp: AC_SRC_OVER as u8,
+        BlendFlags: 0,
+        SourceConstantAlpha: 255,
+        AlphaFormat: AC_SRC_ALPHA as u8,
+    };
+
+    unsafe {
+        UpdateLayeredWindow(
+            win.handle,
+            screen_dc,
+            Some(&zero_position),
+            Some(&size),
+            mem_dc,
+            Some(&zero_position),
+            COLORREF(0),
+            Some(&blend),
+            ULW_ALPHA,
+        )
+        .unwrap();
+        ReleaseDC(HWND(0), screen_dc)
+    };
 }

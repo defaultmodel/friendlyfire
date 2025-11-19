@@ -20,7 +20,7 @@ pub unsafe fn register_window_class(classname: PCSTR) -> Result<HINSTANCE> {
     Ok(instance)
 }
 
-pub unsafe fn create_window(classname: PCSTR, window_instance: HINSTANCE) -> Result<HWND> {
+pub unsafe fn create_layered_window(classname: PCSTR, window_instance: HINSTANCE) -> Result<HWND> {
     unsafe {
         let window_extended_style = WS_EX_LAYERED;
         let window_style = WS_POPUP | WS_VISIBLE;

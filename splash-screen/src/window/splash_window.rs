@@ -23,7 +23,7 @@ impl SplashWindow for Window {
     fn new() -> Self {
         let class_name = s!("friendlyfire-splash-screen");
         let instance = unsafe { winapi::register_window_class(class_name).unwrap() };
-        let window_handle = unsafe { winapi::create_window(class_name, instance).unwrap() };
+        let window_handle = unsafe { winapi::create_layered_window(class_name, instance).unwrap() };
 
         Self {
             handle: window_handle,
