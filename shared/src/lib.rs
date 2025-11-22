@@ -18,11 +18,19 @@ pub enum MessageType {
     ShowImage {
         #[serde(with = "serde_bytes")]
         bytes: Vec<u8>,
+        options: DisplayOptions,
     },
     /// Sent as Vec<u8> for easy async, but handling the payload as &[u8] will be more efficient
     ShowVideo {
         #[serde(with = "serde_bytes")]
         bytes: Vec<u8>,
+        options: DisplayOptions,
     },
     Clear,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DisplayOptions {
+    /// Amount of time in milliseconds the media should stay on screen
+    pub timeout_ms: u32,
 }

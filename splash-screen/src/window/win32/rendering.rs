@@ -91,3 +91,66 @@ pub unsafe fn update_layered(win_handle: HWND, mem_dc: HDC, width: u32, height: 
         ReleaseDC(HWND(0), screen_dc)
     };
 }
+
+pub fn clear(hwnd: HWND) {
+    unsafe {
+        let hdc_screen = GetDC(HWND(0));
+        let mem_dc = CreateCompatibleDC(hdc_screen);
+        ReleaseDC(HWND(0), hdc_screen);
+
+        let size = SIZE { cx: 1, cy: 1 };
+        let pos = POINT { x: 0, y: 0 };
+        let src = POINT { x: 0, y: 0 };
+
+        // 1×1 pixel fully transparent black
+        let pixel = [0u8, 0u8, 0u8, 0u8];
+
+        let bitmap_info = BITMAPINFO {
+            bmiHeader: BITMAPINFOHEADER {
+                biSize: std::mem::size_of::<BITMAPINFOHEADER>() as u32,
+                biWidth: 1,
+                biHeight: -1, // top-down
+                biPlanes: 1,
+                biBitCount: 32,
+                biCompression: BI_RGB.0,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+
+        let mut ptr: *mut std::ffi::c_void = std::ptr::null_mut();
+
+        let bmp =
+            CreateDIBSection(mem_dc, &bitmap_info, DIB_RGB_COLORS, &mut ptr, None, 0).unwrap();
+
+        std::ptr::copy_nonoverlapping(pixel.as_ptr(), ptr as *mut u8, 4);
+
+        let old = SelectObject(mem_dc, bmp);
+
+        let blend = BLENDFUNCTION {
+            BlendOp: AC_SRC_OVER as u8,
+            BlendFlags: 0,
+            SourceConstantAlpha: 255,
+            AlphaFormat: AC_SRC_ALPHA as u8,
+        };
+
+        let hdc_screen2 = GetDC(HWND(0));
+        UpdateLayeredWindow(
+            hwnd,
+            hdc_screen2,
+            Some(&pos),
+            Some(&size),
+            mem_dc,
+            Some(&src),
+            COLORREF(0),
+            Some(&blend),
+            ULW_ALPHA,
+        )
+        .unwrap();
+
+        ReleaseDC(HWND(0), hdc_screen2);
+
+        SelectObject(mem_dc, old);
+        DeleteDC(mem_dc);
+    }
+}

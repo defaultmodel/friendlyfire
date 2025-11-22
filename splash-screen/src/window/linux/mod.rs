@@ -3,6 +3,8 @@ mod x11;
 
 use std::env;
 
+use friendlyfire_shared_lib::DisplayOptions;
+
 use crate::{media::decoded::DecodedMedia, window::traits::SplashWindow};
 
 pub enum LinuxSplashWindow {
@@ -37,16 +39,10 @@ impl LinuxSplashWindow {
             LinuxSplashWindow::X11(w) => w.destroy(),
         }
     }
-    pub fn resize(&self, width: u32, height: u32) {
+    pub fn show_media(&self, media: DecodedMedia, options: DisplayOptions) {
         match self {
-            LinuxSplashWindow::Wayland(w) => w.resize(width, height),
-            LinuxSplashWindow::X11(w) => w.resize(width, height),
-        }
-    }
-    pub fn show_media(&self, media: DecodedMedia) {
-        match self {
-            LinuxSplashWindow::Wayland(w) => w.show_media(media),
-            LinuxSplashWindow::X11(w) => w.show_media(media),
+            LinuxSplashWindow::Wayland(w) => w.show_media(media, options),
+            LinuxSplashWindow::X11(w) => w.show_media(media, options),
         }
     }
     pub fn clear(&self) {

@@ -1,3 +1,5 @@
+use friendlyfire_shared_lib::DisplayOptions;
+
 use crate::media::decoded::DecodedMedia;
 use crate::window::traits::SplashWindow;
 
@@ -17,10 +19,7 @@ impl SplashWindow for WaylandWindow {
     fn destroy(&self) {
         todo!()
     }
-    fn resize(&self, w: u32, h: u32) {
-        todo!()
-    }
-    fn show_media(&self, media: DecodedMedia) {
+    fn show_media(&self, media: DecodedMedia, options: DisplayOptions) {
         todo!()
     }
     fn clear(&self) {

@@ -1,3 +1,5 @@
+use friendlyfire_shared_lib::DisplayOptions;
+
 use crate::media::decoded::DecodedMedia;
 
 pub trait SplashWindow {
@@ -13,11 +15,8 @@ pub trait SplashWindow {
     /// Completely destroy the window
     fn destroy(&self);
 
-    /// Resize the window surface
-    fn resize(&self, width: u32, height: u32);
-
     /// Render a full decoded media from start to end
-    fn show_media(&self, media: DecodedMedia);
+    fn show_media(&self, media: DecodedMedia, options: DisplayOptions);
 
     /// Clear the window to transparency
     fn clear(&self);

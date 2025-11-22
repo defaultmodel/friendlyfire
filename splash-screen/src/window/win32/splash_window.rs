@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use friendlyfire_shared_lib::DisplayOptions;
 use windows::Win32::{Foundation::*, Graphics::Gdi::*, UI::WindowsAndMessaging::*};
 use windows::core::*;
 
@@ -40,32 +41,55 @@ impl SplashWindow for Win32Window {
         unsafe { DestroyWindow(self.handle).unwrap() }
     }
 
-    fn resize(&self, width: u32, height: u32) {
-        todo!()
-    }
-
-    fn show_media(&self, media: DecodedMedia) {
+    fn show_media(&self, media: DecodedMedia, options: DisplayOptions) {
+        let timeout = std::time::Duration::from_millis(options.timeout_ms as u64);
+        let start = std::time::Instant::now();
         match media {
-            DecodedMedia::Static(frame) => self.draw_frame(&frame),
+            DecodedMedia::Static(frame) => {
+                self.draw_frame(&frame);
+
+                std::thread::sleep(timeout);
+
+                self.clear();
+            }
             DecodedMedia::Animated(frames) => {
-                for frame in frames.iter() {
-                    println!("drawing new frame ");
+                let mut idx = 0;
+
+                // Loop frames until total elapsed >= timeout
+                loop {
+                    let elapsed = start.elapsed();
+                    if elapsed >= timeout {
+                        break;
+                    }
+
+                    let frame = &frames[idx];
+
+                    // draw immediately
+                    let draw_start = std::time::Instant::now();
                     self.draw_frame(frame);
-                    std::thread::sleep(Duration::from_millis(frame.delay_ms.max(1) as u64));
+                    let draw_time = draw_start.elapsed();
+
+                    // ensure frame stays up for full delay
+                    let delay = frame.delay_ms.max(1) as u64;
+                    let frame_duration = std::time::Duration::from_millis(delay);
+
+                    if draw_time < frame_duration {
+                        std::thread::sleep(frame_duration - draw_time);
+                    }
+
+                    // next frame index
+                    idx = (idx + 1) % frames.len();
                 }
+
+                self.clear();
             }
             DecodedMedia::Video(video_stream) => todo!(),
         }
     }
     /// Clear the windows and makes it dissappear from view
     fn clear(&self) {
-        todo!()
+        rendering::clear(self.handle)
     }
-    // Updates the windows with a new image
-    // NOTE: This does not show the window, use show() for this
-    // fn update_image(&self, bytes: &[u8]) {
-    //     rendering::update_image(self, bytes);
-    // }
 }
 
 impl Win32Window {

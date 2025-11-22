@@ -1,6 +1,6 @@
 use std::fs;
 
-use friendlyfire_shared_lib::{Message, MessageType};
+use friendlyfire_shared_lib::{DisplayOptions, Message, MessageType};
 use windows::Win32::Foundation::HWND;
 use windows::Win32::UI::WindowsAndMessaging::{DispatchMessageA, GetMessageA, TranslateMessage};
 
@@ -18,19 +18,22 @@ fn main() -> anyhow::Result<()> {
     let img_bytes = fs::read("john-walk.gif").expect("image not found");
     let message = Message {
         version: "1.0.0".to_string(),
-        kind: MessageType::ShowImage { bytes: img_bytes },
+        kind: MessageType::ShowImage {
+            bytes: img_bytes,
+            options: DisplayOptions { timeout_ms: 3000 },
+        },
         party: Some("test-party".to_string()),
     };
 
     match message.kind {
-        MessageType::ShowImage { bytes } => {
+        MessageType::ShowImage { bytes, options } => {
             let decoded_media = MediaDecoder::decode(&bytes).unwrap();
-            window.show_media(decoded_media)
+            window.show_media(decoded_media, options)
         }
 
-        MessageType::ShowVideo { bytes } => {
+        MessageType::ShowVideo { bytes, options } => {
             let decoded_media = MediaDecoder::decode(&bytes).unwrap();
-            window.show_media(decoded_media)
+            window.show_media(decoded_media, options)
         }
 
         MessageType::Clear => {
