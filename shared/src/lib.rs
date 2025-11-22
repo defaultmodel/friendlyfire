@@ -1,14 +1,28 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Message {
+    /// MAJOR.MINOR.PATCH
+    /// See https://semver.org/
+    pub version: String,
+    /// Type of message
+    #[serde(flatten)]
+    pub kind: MessageType,
+    pub party: Option<String>,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(tag = "type")]
+pub enum MessageType {
+    /// Sent as Vec<u8> for easy async, but handling the payload as &[u8] will be more efficient
+    ShowImage {
+        #[serde(with = "serde_bytes")]
+        bytes: Vec<u8>,
+    },
+    /// Sent as Vec<u8> for easy async, but handling the payload as &[u8] will be more efficient
+    ShowVideo {
+        #[serde(with = "serde_bytes")]
+        bytes: Vec<u8>,
+    },
+    Clear,
 }
