@@ -1,12 +1,11 @@
-use std::time::Duration;
-
 use friendlyfire_shared_lib::DisplayOptions;
 use tokio::time;
-use windows::Win32::{Foundation::*, Graphics::Gdi::*, UI::WindowsAndMessaging::*};
+use windows::Win32::{Foundation::*, UI::WindowsAndMessaging::*};
 use windows::core::*;
 
+use crate::window::win32::rendering::Win32Renderer;
 use crate::{
-    media::{decoded::DecodedMedia, frame::Frame},
+    media::decoded::DecodedMedia,
     window::{
         traits::SplashWindow,
         win32::{rendering, winapi},
@@ -82,37 +81,5 @@ impl SplashWindow for Win32Window {
     /// Clear the windows and makes it dissappear from view
     fn clear(&self) {
         rendering::clear(self.handle)
-    }
-}
-
-impl Win32Window {
-    /// Render a single decoded frame (static, animation frame or video frame)
-    fn draw_frame(&self, frame: &Frame) {
-        let bgra = rendering::rgba_to_premultiplied_bgra(&frame.rgba);
-
-        unsafe {
-            // create compatible DC
-            let hdc_screen = GetDC(HWND(0));
-            let mem_dc = CreateCompatibleDC(hdc_screen);
-            ReleaseDC(HWND(0), hdc_screen);
-
-            // create DIB section and copy pixels
-            let dib = rendering::create_dib_section(mem_dc, frame.width, frame.height, &bgra);
-            let old = SelectObject(mem_dc, dib);
-
-            // update layered window
-            rendering::update_layered(self.handle, mem_dc, frame.width, frame.height);
-
-            // cleanup
-            SelectObject(mem_dc, old);
-            if let BOOL(0) = DeleteObject(dib) {
-                eprintln!("Unable to delete DIB object");
-                panic!();
-            }
-            if let BOOL(0) = DeleteDC(mem_dc) {
-                eprintln!("Unable to delete DC");
-                panic!();
-            }
-        }
     }
 }
