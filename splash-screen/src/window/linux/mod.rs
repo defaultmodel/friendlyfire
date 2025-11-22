@@ -39,10 +39,10 @@ impl LinuxSplashWindow {
             LinuxSplashWindow::X11(w) => w.destroy(),
         }
     }
-    pub fn show_media(&self, media: DecodedMedia, options: DisplayOptions) {
+    pub async fn show_media(&self, media: DecodedMedia, options: DisplayOptions) {
         match self {
-            LinuxSplashWindow::Wayland(w) => w.show_media(media, options),
-            LinuxSplashWindow::X11(w) => w.show_media(media, options),
+            LinuxSplashWindow::Wayland(w) => w.show_media(media, options).await,
+            LinuxSplashWindow::X11(w) => w.show_media(media, options).await,
         }
     }
     pub fn clear(&self) {

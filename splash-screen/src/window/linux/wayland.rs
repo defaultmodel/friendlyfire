@@ -19,7 +19,7 @@ impl SplashWindow for WaylandWindow {
     fn destroy(&self) {
         todo!()
     }
-    fn show_media(&self, media: DecodedMedia, options: DisplayOptions) {
+    async fn show_media(&self, media: DecodedMedia, options: DisplayOptions) {
         todo!()
     }
     fn clear(&self) {

@@ -16,7 +16,7 @@ pub trait SplashWindow {
     fn destroy(&self);
 
     /// Render a full decoded media from start to end
-    fn show_media(&self, media: DecodedMedia, options: DisplayOptions);
+    async fn show_media(&self, media: DecodedMedia, options: DisplayOptions);
 
     /// Clear the window to transparency
     fn clear(&self);

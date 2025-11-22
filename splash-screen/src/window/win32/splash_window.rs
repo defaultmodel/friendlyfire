@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use friendlyfire_shared_lib::DisplayOptions;
+use tokio::time;
 use windows::Win32::{Foundation::*, Graphics::Gdi::*, UI::WindowsAndMessaging::*};
 use windows::core::*;
 
@@ -41,43 +42,35 @@ impl SplashWindow for Win32Window {
         unsafe { DestroyWindow(self.handle).unwrap() }
     }
 
-    fn show_media(&self, media: DecodedMedia, options: DisplayOptions) {
-        let timeout = std::time::Duration::from_millis(options.timeout_ms as u64);
-        let start = std::time::Instant::now();
+    async fn show_media(&self, media: DecodedMedia, options: DisplayOptions) {
+        let timeout = time::Duration::from_millis(options.timeout_ms as u64);
+        let start = time::Instant::now();
         match media {
             DecodedMedia::Static(frame) => {
                 self.draw_frame(&frame);
-
-                std::thread::sleep(timeout);
-
+                time::sleep(timeout).await;
                 self.clear();
             }
             DecodedMedia::Animated(frames) => {
                 let mut idx = 0;
 
-                // Loop frames until total elapsed >= timeout
                 loop {
-                    let elapsed = start.elapsed();
-                    if elapsed >= timeout {
+                    if time::Instant::now().duration_since(start) >= timeout {
                         break;
                     }
 
                     let frame = &frames[idx];
-
-                    // draw immediately
-                    let draw_start = std::time::Instant::now();
-                    self.draw_frame(frame);
-                    let draw_time = draw_start.elapsed();
-
-                    // ensure frame stays up for full delay
                     let delay = frame.delay_ms.max(1) as u64;
-                    let frame_duration = std::time::Duration::from_millis(delay);
+                    let frame_duration = time::Duration::from_millis(delay);
 
-                    if draw_time < frame_duration {
-                        std::thread::sleep(frame_duration - draw_time);
+                    let draw_start = time::Instant::now();
+                    self.draw_frame(frame);
+                    let draw_elapsed = draw_start.elapsed();
+
+                    if draw_elapsed < frame_duration {
+                        time::sleep(frame_duration - draw_elapsed).await;
                     }
 
-                    // next frame index
                     idx = (idx + 1) % frames.len();
                 }
 

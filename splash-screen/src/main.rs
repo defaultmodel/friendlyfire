@@ -11,7 +11,8 @@ mod media;
 mod network;
 mod window;
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     // 1) Create the window, do not show yet
     let window = PlatformSplashWindow::new();
 
@@ -28,12 +29,12 @@ fn main() -> anyhow::Result<()> {
     match message.kind {
         MessageType::ShowImage { bytes, options } => {
             let decoded_media = MediaDecoder::decode(&bytes).unwrap();
-            window.show_media(decoded_media, options)
+            window.show_media(decoded_media, options).await
         }
 
         MessageType::ShowVideo { bytes, options } => {
             let decoded_media = MediaDecoder::decode(&bytes).unwrap();
-            window.show_media(decoded_media, options)
+            window.show_media(decoded_media, options).await
         }
 
         MessageType::Clear => {
