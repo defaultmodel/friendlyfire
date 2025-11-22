@@ -3,41 +3,7 @@ use std::{ffi::c_void, io::Cursor, mem::size_of, ptr};
 use image::ImageReader;
 use windows::Win32::{Foundation::*, Graphics::Gdi::*, UI::WindowsAndMessaging::*};
 
-use super::splash_window::Window;
-
-pub fn update_image(win: &Window, bytes: &[u8]) {
-    let image_rgba8 = ImageReader::new(Cursor::new(bytes))
-        .with_guessed_format()
-        .unwrap()
-        .decode()
-        .unwrap()
-        .to_rgba8();
-
-    let (width, height) = image_rgba8.dimensions();
-    let bgra = rgba_to_premultiplied_bgra(&image_rgba8);
-
-    unsafe {
-        let hdc_screen = GetDC(HWND(0));
-        let mem_dc = CreateCompatibleDC(hdc_screen);
-        ReleaseDC(HWND(0), hdc_screen);
-
-        let dib = create_dib_section(mem_dc, width, height, &bgra);
-        let old = SelectObject(mem_dc, dib);
-
-        update_layered(win, mem_dc, width, height);
-
-        // Cleanup
-        SelectObject(mem_dc, old);
-        if let BOOL(0) = DeleteObject(dib) {
-            eprintln!("Unable to delete object");
-            panic!();
-        }
-        if let BOOL(0) = DeleteDC(mem_dc) {
-            eprintln!("Unable to delete DC");
-            panic!();
-        }
-    }
-}
+use crate::window::win32::Win32Window;
 
 pub fn rgba_to_premultiplied_bgra(src: &[u8]) -> Vec<u8> {
     let mut bgra = Vec::with_capacity(src.len());
@@ -58,7 +24,7 @@ pub fn rgba_to_premultiplied_bgra(src: &[u8]) -> Vec<u8> {
     bgra
 }
 
-unsafe fn create_dib_section(mem_dc: HDC, width: u32, height: u32, bgra: &[u8]) -> HBITMAP {
+pub unsafe fn create_dib_section(mem_dc: HDC, width: u32, height: u32, bgra: &[u8]) -> HBITMAP {
     let header = BITMAPINFOHEADER {
         biSize: size_of::<BITMAPINFOHEADER>() as u32,
         biWidth: width as i32,
@@ -84,7 +50,7 @@ unsafe fn create_dib_section(mem_dc: HDC, width: u32, height: u32, bgra: &[u8]) 
     bitmap
 }
 
-unsafe fn update_layered(win: &Window, mem_dc: HDC, width: u32, height: u32) {
+pub unsafe fn update_layered(win_handle: HWND, mem_dc: HDC, width: u32, height: u32) {
     let screen_dc = unsafe { GetDC(HWND(0)) };
 
     let size = SIZE {
@@ -111,7 +77,7 @@ unsafe fn update_layered(win: &Window, mem_dc: HDC, width: u32, height: u32) {
 
     unsafe {
         UpdateLayeredWindow(
-            win.handle,
+            win_handle,
             screen_dc,
             Some(&center_position),
             Some(&size),

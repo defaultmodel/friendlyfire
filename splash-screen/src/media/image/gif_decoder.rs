@@ -1,0 +1,28 @@
+use image::AnimationDecoder;
+
+use crate::media::decoded::DecodedMedia;
+use crate::media::decoder::MediaFormatDecoder;
+use crate::media::frame::Frame;
+use std::io::Cursor;
+
+pub struct GifDecoder;
+
+impl MediaFormatDecoder for GifDecoder {
+    fn decode(bytes: &[u8]) -> Option<DecodedMedia> {
+        let cursor = Cursor::new(bytes);
+        let decoder = image::codecs::gif::GifDecoder::new(cursor).ok()?;
+        let frames_iter = decoder.into_frames();
+        let frames_vec = frames_iter.collect_frames().ok()?;
+
+        let frames = frames_vec
+            .into_iter()
+            .map(|frame| {
+                let delay_ms = frame.delay().numer_denom_ms().0; // delay in ms
+                let buffer = frame.into_buffer();
+                Frame::new(buffer.width(), buffer.height(), buffer.into_vec(), delay_ms)
+            })
+            .collect();
+
+        Some(DecodedMedia::Animated(frames))
+    }
+}

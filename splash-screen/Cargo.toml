@@ -14,7 +14,10 @@ lto = true
 codegen-units = 1
 
 [dependencies]
+anyhow = "1.0.100"
+friendlyfire-shared-lib = { path = "../shared" }
 image = "0.25.9"
+rmp-serde = "1.3.0"
 windows = { version = "0.57", features = [
   "Win32_UI_WindowsAndMessaging",
   "Win32_System_Com",

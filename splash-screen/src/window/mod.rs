@@ -1,5 +1,11 @@
-mod rendering;
-mod splash_window;
-mod winapi;
+mod linux;
+mod traits;
+mod win32;
 
-pub use splash_window::{SplashWindow, Window};
+pub use traits::SplashWindow;
+
+#[cfg(target_os = "windows")]
+pub use win32::Win32Window as PlatformSplashWindow;
+
+#[cfg(target_os = "linux")]
+pub use linux::LinuxSplashWindow as PlatformSplashWindow;
