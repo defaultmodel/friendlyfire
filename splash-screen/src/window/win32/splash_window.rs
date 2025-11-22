@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use windows::Win32::{Foundation::*, Graphics::Gdi::*, UI::WindowsAndMessaging::*};
 use windows::core::*;
 
@@ -45,7 +47,13 @@ impl SplashWindow for Win32Window {
     fn show_media(&self, media: DecodedMedia) {
         match media {
             DecodedMedia::Static(frame) => self.draw_frame(&frame),
-            DecodedMedia::Animated(frames) => todo!(),
+            DecodedMedia::Animated(frames) => {
+                for frame in frames.iter() {
+                    println!("drawing new frame ");
+                    self.draw_frame(frame);
+                    std::thread::sleep(Duration::from_millis(frame.delay_ms.max(1) as u64));
+                }
+            }
             DecodedMedia::Video(video_stream) => todo!(),
         }
     }

@@ -15,7 +15,7 @@ fn main() -> anyhow::Result<()> {
     // 1) Create the window, do not show yet
     let window = PlatformSplashWindow::new();
 
-    let img_bytes = fs::read("bonk.png").expect("bonk.png not found");
+    let img_bytes = fs::read("john-walk.gif").expect("image not found");
     let message = Message {
         version: "1.0.0".to_string(),
         kind: MessageType::ShowImage { bytes: img_bytes },

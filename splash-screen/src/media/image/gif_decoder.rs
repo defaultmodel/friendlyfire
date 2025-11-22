@@ -17,7 +17,8 @@ impl MediaFormatDecoder for GifDecoder {
         let frames = frames_vec
             .into_iter()
             .map(|frame| {
-                let delay_ms = frame.delay().numer_denom_ms().0; // delay in ms
+                let (numerator, denominator) = frame.delay().numer_denom_ms();
+                let delay_ms = numerator / denominator;
                 let buffer = frame.into_buffer();
                 Frame::new(buffer.width(), buffer.height(), buffer.into_vec(), delay_ms)
             })
