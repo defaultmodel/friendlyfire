@@ -13,11 +13,6 @@ pub struct Frame {
     /// Frame duration in milliseconds.
     /// 0 = treat as “static”.
     pub delay_ms: u32,
-
-    /// Presentation timestamp (for video and animated images)
-    /// > When should this frame be shown ?
-    ///
-    pub timestamp: Option<u64>,
 }
 
 impl Frame {
@@ -27,11 +22,6 @@ impl Frame {
             height,
             rgba,
             delay_ms,
-            timestamp: None,
         }
-    }
-
-    pub fn is_static(&self) -> bool {
-        self.delay_ms <= 1 && self.timestamp.is_none()
     }
 }
