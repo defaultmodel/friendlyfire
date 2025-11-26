@@ -1,6 +1,6 @@
+use crate::frame::Frame;
 use crate::media::decoded::DecodedMedia;
 use crate::media::decoder::MediaFormatDecoder;
-use crate::media::frame::Frame;
 use image::ImageReader;
 use std::io::Cursor;
 

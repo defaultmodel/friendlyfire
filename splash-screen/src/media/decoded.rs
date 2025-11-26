@@ -1,4 +1,4 @@
-use crate::media::frame::Frame;
+use crate::frame::Frame;
 
 pub enum DecodedMedia {
     Static(Frame),

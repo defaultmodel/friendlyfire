@@ -7,6 +7,7 @@ use windows::Win32::UI::WindowsAndMessaging::{DispatchMessageA, GetMessageA, Tra
 use crate::media::decoder::MediaDecoder;
 use crate::window::{PlatformSplashWindow, SplashWindow};
 
+mod frame;
 mod media;
 mod network;
 mod window;

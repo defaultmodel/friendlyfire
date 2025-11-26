@@ -1,8 +1,8 @@
 use image::AnimationDecoder;
 
+use crate::frame::Frame;
 use crate::media::decoded::DecodedMedia;
 use crate::media::decoder::MediaFormatDecoder;
-use crate::media::frame::Frame;
 use std::io::Cursor;
 
 pub struct GifDecoder;

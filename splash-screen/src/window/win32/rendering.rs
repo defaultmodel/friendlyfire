@@ -2,16 +2,11 @@ use std::{ffi::c_void, mem::size_of, ptr};
 
 use windows::Win32::{Foundation::*, Graphics::Gdi::*, UI::WindowsAndMessaging::*};
 
-use crate::{
-    media::frame::{Drawable, Frame},
-    window::win32::Win32Window,
-};
+use crate::{frame::Frame, window::win32::Win32Window};
 
 pub trait Win32Renderer {
     /// Render a complete Frame to the layered window
     fn draw_frame(&self, frame: &Frame);
-    /// Optional helper: draw Drawable layers
-    fn apply_overlays(&self, frame: &mut Frame, overlays: &[Box<dyn Drawable>]);
 }
 
 impl Win32Renderer for Win32Window {
@@ -26,12 +21,6 @@ impl Win32Renderer for Win32Window {
             update_layered_window(self.handle, mem_dc, frame.width, frame.height);
 
             cleanup_dc(mem_dc, dib, old_obj);
-        }
-    }
-
-    fn apply_overlays(&self, frame: &mut Frame, overlays: &[Box<dyn Drawable>]) {
-        for overlay in overlays {
-            overlay.draw(frame);
         }
     }
 }
