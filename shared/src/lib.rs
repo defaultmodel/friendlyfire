@@ -25,7 +25,9 @@ pub enum MessageType {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+// TODO : Add a timeout_ms, an overlay should be able to last not as long as the overall media
 pub struct Overlay {
+    kind: OverlayType,
     /// Amount of time in milliseconds the media should stay on screen
     /// Sent as Vec<u8> for easy async, but handling the payload as &[u8] will be more efficient
     #[serde(with = "serde_bytes")]
@@ -36,8 +38,14 @@ pub struct Overlay {
 
     /// z-order for composition (0 = behind, high = front)
     pub z_index: u32,
-    // Amount of time in milliseconds the overlay should stay on screen
-    // pub timeout_ms: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(tag = "type")]
+pub enum OverlayType {
+    Text,
+    Image,
+    AnimatedImage,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
