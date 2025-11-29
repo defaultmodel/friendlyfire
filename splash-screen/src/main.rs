@@ -1,47 +1,93 @@
 use std::fs;
 
-use friendlyfire_shared_lib::{DisplayOptions, Message, MessageType};
-use windows::Win32::Foundation::HWND;
-use windows::Win32::UI::WindowsAndMessaging::{DispatchMessageA, GetMessageA, TranslateMessage};
+use crate::{
+    compositor::Compositor,
+    overlay::{AnimatedOverlay, OverlayImage},
+    window::{SplashWindow, Win32Renderer, Win32Window},
+};
 
-use crate::media::decoder::MediaDecoder;
-use crate::window::{PlatformSplashWindow, SplashWindow};
+use friendlyfire_shared_lib::{DisplayOptions, Message, MessageType, Overlay as LibOverlay};
+use windows::Win32::{
+    Foundation::HWND,
+    UI::WindowsAndMessaging::{DispatchMessageA, GetMessageA, TranslateMessage},
+};
 
+mod compositor;
 mod frame;
-mod media;
-mod network;
+
+mod overlay;
 mod window;
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    // 1) Create the window, do not show yet
-    let window = PlatformSplashWindow::new();
-
-    let img_bytes = fs::read("john-walk.gif").expect("image not found");
-    let message = Message {
+fn receive_mock_message() -> Message {
+    Message {
         version: "1.0.0".to_string(),
-        kind: MessageType::ShowImage {
-            bytes: img_bytes,
+        party: friendlyfire_shared_lib::Party {
+            id: "beepboop".to_string(),
+            name: "FriendlyParty".to_string(),
+        },
+        kind: MessageType::ShowMedia {
+            overlays: vec![LibOverlay::AnimatedImage {
+                bytes: fs::read("john-walk.gif").unwrap(),
+                x: 200,
+                y: 200,
+                z_index: 1000,
+            }],
             options: DisplayOptions { timeout_ms: 3000 },
         },
-        party: Some("test-party".to_string()),
-    };
+    }
+}
 
-    match message.kind {
-        MessageType::ShowImage { bytes, options } => {
-            let decoded_media = MediaDecoder::decode(&bytes).unwrap();
-            window.show_media(decoded_media, options).await
-        }
+fn main() -> anyhow::Result<()> {
+    let mut window = Win32Window::create()?;
+    window.show();
 
-        MessageType::ShowVideo { bytes, options } => {
-            let decoded_media = MediaDecoder::decode(&bytes).unwrap();
-            window.show_media(decoded_media, options).await
-        }
+    // Mock incoming message
+    let message: Message = receive_mock_message();
 
-        MessageType::Clear => {
-            window.clear();
+    // Create compositor
+    let mut compositor = Compositor::new(1920, 1080);
+
+    // Translate message overlays into internal overlays
+    if let MessageType::ShowMedia { overlays, .. } = message.kind {
+        for overlay in overlays {
+            match overlay {
+                LibOverlay::Image {
+                    bytes,
+                    x,
+                    y,
+                    z_index,
+                } => {
+                    let overlay = OverlayImage::from_bytes(&bytes, x, y, z_index);
+                    compositor.add_overlay(Box::new(overlay));
+                }
+                LibOverlay::AnimatedImage {
+                    bytes,
+                    x,
+                    y,
+                    z_index,
+                } => {
+                    let overlay = AnimatedOverlay::from_bytes(&bytes, x, y, z_index, 0);
+                    compositor.add_overlay(Box::new(overlay));
+                }
+                LibOverlay::Text {
+                    text,
+                    size,
+                    color,
+                    x,
+                    y,
+                    z_index,
+                } => {
+                    todo!();
+                }
+            }
         }
     }
+
+    // Compose a single frame at timestamp 0
+    let canvas = compositor.render(0);
+
+    // Render it once
+    window.draw_frame(canvas);
 
     // Basic Win32 message loop
     unsafe {
@@ -51,57 +97,5 @@ async fn main() -> anyhow::Result<()> {
             DispatchMessageA(&msg);
         }
     }
-
-    // 2) Connect to the server
-    // let mut client = WSClient::connect("wss://example.com/party");
-
-    // println!("Connected. Waiting for messages…");
-
-    // 3) Main receive loop
-    // while let Some(rmp) = client.recv() {
-    //     let msg: Message = rmp_serde::from_slice(rmp)?;
-
-    //     match msg.kind {
-    //         MessageType::ShowImage { bytes } => {
-    //             let decoded_media = MediaDecoder::decode(&bytes).unwrap();
-    //             window.show_media(decoded_media)
-    //         }
-
-    //         MessageType::ShowVideo { bytes } => {
-    //             let decoded_media = MediaDecoder::decode(&bytes).unwrap();
-    //             window.show_media(decoded_media)
-    //         }
-
-    //         MessageType::Clear => {
-    //             window.clear();
-    //         }
-    //     }
-    // }
-
-    // unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED).unwrap() };
-
-    // let window = window::Window::new();
-    // let image_bytes = fs::read("bonk.png")?;
-    // window.update_image(&image_bytes);
-
-    // window.show();
-
-    // // Basic Win32 message loop
-    // unsafe {
-    //     let mut msg = std::mem::zeroed();
-    //     while windows::Win32::UI::WindowsAndMessaging::GetMessageA(
-    //         &mut msg,
-    //         windows::Win32::Foundation::HWND(0),
-    //         0,
-    //         0,
-    //     )
-    //     .into()
-    //     {
-    //         let _ = TranslateMessage(&msg);
-    //         DispatchMessageA(&msg);
-    //     }
-    // }
-
-    // unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED).unwrap() };
     Ok(())
 }

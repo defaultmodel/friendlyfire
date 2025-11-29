@@ -1,23 +1,18 @@
-use friendlyfire_shared_lib::DisplayOptions;
-
-use crate::media::decoded::DecodedMedia;
-
 pub trait SplashWindow {
-    /// Create the platform window (transparent, borderless, topmost)
-    fn new() -> Self;
+    /// Create a transparent, borderless, always-on-top window.
+    fn create() -> anyhow::Result<Self>
+    where
+        Self: Sized;
 
     /// Show the window (no-op if already visible)
-    fn show(&self);
+    fn show(&mut self);
 
-    /// Hide the window, but keep resources alive
-    fn hide(&self);
+    /// Hide the window but keep resources alive
+    fn hide(&mut self);
 
-    /// Completely destroy the window
-    fn destroy(&self);
+    /// Release all native resources
+    fn destroy(&mut self);
 
-    /// Render a full decoded media from start to end
-    async fn show_media(&self, media: DecodedMedia, options: DisplayOptions);
-
-    /// Clear the window to transparency
-    fn clear(&self);
+    /// Clear the window to full transparency
+    fn clear(&mut self);
 }

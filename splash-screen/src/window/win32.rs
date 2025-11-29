@@ -3,6 +3,41 @@ use windows::{
     core::*,
 };
 
+use crate::window::traits::SplashWindow;
+
+pub struct Win32Window {
+    pub handle: HWND,
+}
+
+impl SplashWindow for Win32Window {
+    fn create() -> anyhow::Result<Self>
+    where
+        Self: Sized,
+    {
+        let classname = s!("friendlyfire-splas-screen");
+        let instance = unsafe { register_window_class(classname)? };
+        let handle = unsafe { create_layered_window(classname, instance)? };
+
+        Ok(Self { handle })
+    }
+
+    fn show(&mut self) {
+        unsafe { ShowWindow(self.handle, SW_SHOW).unwrap() };
+    }
+
+    fn hide(&mut self) {
+        unsafe { ShowWindow(self.handle, SW_HIDE).unwrap() };
+    }
+
+    fn destroy(&mut self) {
+        unsafe { DestroyWindow(self.handle).unwrap() }
+    }
+
+    fn clear(&mut self) {
+        todo!()
+    }
+}
+
 pub unsafe fn register_window_class(classname: PCSTR) -> Result<HINSTANCE> {
     // An HMODULE is the same thing as an instance
     // This is why I .into() it

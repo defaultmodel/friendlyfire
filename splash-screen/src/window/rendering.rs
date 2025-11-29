@@ -11,7 +11,7 @@ pub trait Win32Renderer {
 
 impl Win32Renderer for Win32Window {
     fn draw_frame(&self, frame: &Frame) {
-        let bgra = rgba_to_premultiplied_bgra(&frame.rgba);
+        let bgra = rgba_to_premultiplied_bgra(&frame.buffer);
 
         unsafe {
             let mem_dc = create_compatible_dc();

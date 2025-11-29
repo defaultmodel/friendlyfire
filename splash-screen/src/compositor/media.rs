@@ -1,6 +1,6 @@
 use crate::frame::Frame;
 
-pub enum DecodedMedia {
+pub enum Media {
     Static(Frame),
     Animated(Vec<Frame>),
 }
