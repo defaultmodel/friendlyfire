@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, time};
 
 use crate::{
     compositor::Compositor,
@@ -7,10 +7,7 @@ use crate::{
 };
 
 use friendlyfire_shared_lib::{DisplayOptions, Message, MessageType, Overlay as LibOverlay};
-use windows::Win32::{
-    Foundation::HWND,
-    UI::WindowsAndMessaging::{DispatchMessageA, GetMessageA, TranslateMessage},
-};
+use tokio::time::Instant;
 
 mod compositor;
 mod frame;
@@ -27,7 +24,7 @@ fn receive_mock_message() -> Message {
         },
         kind: MessageType::ShowMedia {
             overlays: vec![LibOverlay::AnimatedImage {
-                bytes: fs::read("john-walk.gif").unwrap(),
+                bytes: fs::read("jonh-walk.gif").unwrap(),
                 x: 200,
                 y: 200,
                 z_index: 1000,
@@ -66,7 +63,8 @@ fn main() -> anyhow::Result<()> {
                     y,
                     z_index,
                 } => {
-                    let overlay = AnimatedOverlay::from_bytes(&bytes, x, y, z_index, 0);
+                    let start_time_ms = Instant::now().elapsed().as_millis() as u64; // will be near 0 but fine
+                    let overlay = AnimatedOverlay::from_bytes(&bytes, x, y, z_index, start_time_ms);
                     compositor.add_overlay(Box::new(overlay));
                 }
                 LibOverlay::Text {
@@ -82,20 +80,20 @@ fn main() -> anyhow::Result<()> {
             }
         }
     }
+    // Use a monotonic clock origin
+    let origin = Instant::now();
 
-    // Compose a single frame at timestamp 0
-    let canvas = compositor.render(0);
+    loop {
+        let timestamp_ms = origin.elapsed().as_millis() as u64;
 
-    // Render it once
-    window.draw_frame(canvas);
+        let canvas = compositor.render(timestamp_ms);
+        window.draw_frame(canvas);
 
-    // Basic Win32 message loop
-    unsafe {
-        let mut msg = std::mem::zeroed();
-        while GetMessageA(&mut msg, HWND(0), 0, 0).into() {
-            let _ = TranslateMessage(&msg);
-            DispatchMessageA(&msg);
-        }
+        // how long until next per-overlay frame change?
+        let until_next = compositor.time_until_next_frame_ms(timestamp_ms);
+        let sleep_ms = until_next.unwrap_or(1); // fallback 60 fps
+
+        // Sleep exactly the requested amount (renderer controls timing)
+        std::thread::sleep(time::Duration::from_millis(sleep_ms));
     }
-    Ok(())
 }

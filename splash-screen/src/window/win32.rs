@@ -7,6 +7,7 @@ use crate::window::traits::SplashWindow;
 
 pub struct Win32Window {
     pub handle: HWND,
+    pub thread: std::thread::JoinHandle<()>,
 }
 
 impl SplashWindow for Win32Window {
@@ -14,11 +15,28 @@ impl SplashWindow for Win32Window {
     where
         Self: Sized,
     {
-        let classname = s!("friendlyfire-splas-screen");
-        let instance = unsafe { register_window_class(classname)? };
-        let handle = unsafe { create_layered_window(classname, instance)? };
+        let (tx, rx) = std::sync::mpsc::sync_channel(1);
 
-        Ok(Self { handle })
+        let thread = std::thread::spawn(move || {
+            unsafe {
+                let classname = s!("friendlyfire-splash-screen");
+                let instance = register_window_class(classname).unwrap();
+                let handle = create_layered_window(classname, instance).unwrap();
+
+                // Send handle back
+                tx.send(handle).unwrap();
+
+                // Message loop
+                let mut msg = std::mem::zeroed();
+                while GetMessageA(&mut msg, HWND(0), 0, 0).into() {
+                    let _ = TranslateMessage(&msg);
+                    DispatchMessageA(&msg);
+                }
+            }
+        });
+
+        let handle = rx.recv()?; // Wait for the thread to create the window
+        Ok(Self { handle, thread })
     }
 
     fn show(&mut self) {

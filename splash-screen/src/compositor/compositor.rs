@@ -33,4 +33,13 @@ impl Compositor {
 
         &self.canvas
     }
+
+    /// Return the minimum time until any overlay wants its next frame change.
+    /// If no overlay requires a timed update, returns None.
+    pub fn time_until_next_frame_ms(&self, timestamp_ms: u64) -> Option<u64> {
+        self.overlays
+            .iter()
+            .filter_map(|o| o.time_to_next_frame_ms(timestamp_ms))
+            .min()
+    }
 }

@@ -41,4 +41,8 @@ impl Overlay for OverlayImage {
             &self.frame.buffer,
         );
     }
+
+    fn time_to_next_frame_ms(&self, _timestamp_ms: u64) -> Option<u64> {
+        None
+    }
 }

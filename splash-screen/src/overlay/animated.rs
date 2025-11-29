@@ -65,6 +65,32 @@ impl AnimatedOverlay {
         // fallback to last frame
         self.frames.len() - 1
     }
+
+    /// Compute how many ms remain until the end of the current frame.
+    fn time_remaining_on_current_frame(&self, timestamp_ms: u64) -> Option<u64> {
+        if self.frames.is_empty() {
+            return None;
+        }
+
+        let total_duration: u64 = self.frames.iter().map(|f| f.delay_ms as u64).sum();
+        if total_duration == 0 {
+            return None;
+        }
+
+        let elapsed = timestamp_ms.saturating_sub(self.start_time_ms);
+        let mut time_in_cycle = elapsed % total_duration;
+
+        for frame in &self.frames {
+            let dur = frame.delay_ms as u64;
+            if time_in_cycle < dur {
+                return Some(dur - time_in_cycle);
+            }
+            time_in_cycle -= dur;
+        }
+
+        // should not reach here, but fallback to first frame duration
+        Some(self.frames[0].delay_ms as u64)
+    }
 }
 
 impl Overlay for AnimatedOverlay {
@@ -87,5 +113,9 @@ impl Overlay for AnimatedOverlay {
             frame.height,
             &frame.buffer,
         );
+    }
+
+    fn time_to_next_frame_ms(&self, timestamp_ms: u64) -> Option<u64> {
+        self.time_remaining_on_current_frame(timestamp_ms)
     }
 }
