@@ -4,12 +4,12 @@ use image::ImageReader;
 
 use crate::{frame::Frame, overlay::Overlay};
 
-pub struct OverlayImage {
+pub struct ImageOverlay {
     pub z_index: u32,
     pub frame: Frame,
 }
 
-impl OverlayImage {
+impl ImageOverlay {
     pub fn from_bytes(bytes: &[u8], left: i32, top: i32, z_index: u32) -> Self {
         let rgba = ImageReader::new(Cursor::new(bytes))
             .with_guessed_format()
@@ -27,7 +27,7 @@ impl OverlayImage {
     }
 }
 
-impl Overlay for OverlayImage {
+impl Overlay for ImageOverlay {
     fn z_index(&self) -> i32 {
         self.frame.delay_ms as i32
     }

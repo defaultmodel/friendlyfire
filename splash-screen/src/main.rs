@@ -2,7 +2,7 @@ use std::{fs, time};
 
 use crate::{
     compositor::Compositor,
-    overlay::{AnimatedOverlay, OverlayImage},
+    overlay::{AnimatedOverlay, ImageOverlay},
     window::{SplashWindow, Win32Renderer, Win32Window},
 };
 
@@ -54,7 +54,7 @@ fn main() -> anyhow::Result<()> {
                     y,
                     z_index,
                 } => {
-                    let overlay = OverlayImage::from_bytes(&bytes, x, y, z_index);
+                    let overlay = ImageOverlay::from_bytes(&bytes, x, y, z_index);
                     compositor.add_overlay(Box::new(overlay));
                 }
                 LibOverlay::AnimatedImage {
@@ -80,6 +80,7 @@ fn main() -> anyhow::Result<()> {
             }
         }
     }
+
     // Use a monotonic clock origin
     let origin = Instant::now();
 
