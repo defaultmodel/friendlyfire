@@ -91,7 +91,7 @@ fn main() -> anyhow::Result<()> {
 
         // how long until next per-overlay frame change?
         let until_next = compositor.time_until_next_frame_ms(timestamp_ms);
-        let sleep_ms = until_next.unwrap_or(1); // fallback 60 fps
+        let sleep_ms = until_next.unwrap_or(16); // fallback 60 fps
 
         // Sleep exactly the requested amount (renderer controls timing)
         std::thread::sleep(time::Duration::from_millis(sleep_ms));
