@@ -1,15 +1,21 @@
 use serde::{Deserialize, Serialize};
 
+/// Full message wrapper exchanged between all components
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Message {
-    /// MAJOR.MINOR.PATCH
-    /// See https://semver.org/
+    /// MAJOR.MINOR.PATCH following semver
     pub version: String,
-    pub party: Option<String>,
+    pub party: Party,
 
-    /// Type of message
+    /// The actual payload
     #[serde(flatten)]
     pub kind: MessageType,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Party {
+    pub id: String,
+    pub name: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -21,31 +27,40 @@ pub enum MessageType {
         overlays: Vec<Overlay>,
         options: DisplayOptions,
     },
+    /// FOR DEBUG
+    /// Removes anything shown on the splash screen
     Clear,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 // TODO : Add a timeout_ms, an overlay should be able to last not as long as the overall media
-pub struct Overlay {
-    kind: OverlayType,
-    /// Amount of time in milliseconds the media should stay on screen
-    /// Sent as Vec<u8> for easy async, but handling the payload as &[u8] will be more efficient
-    #[serde(with = "serde_bytes")]
-    pub bytes: Vec<u8>,
+pub enum Overlay {
+    Text {
+        text: String,
+        size: u32,
+        color: [u8; 4],
+        x: i32,
+        y: i32,
+        z_index: u32,
+    },
+    Image {
+        // Sent as Vec<u8> for easy async, but handling the payload as &[u8] will be more efficient
+        /// raw PNG/JPEG/WebP/etc.
+        #[serde(with = "serde_bytes")]
+        bytes: Vec<u8>,
+        x: i32,
+        y: i32,
+        /// z-order for composition (0 = behind, high = front)
+        z_index: u32,
+    },
 
-    pub x: i32,
-    pub y: i32,
-
-    /// z-order for composition (0 = behind, high = front)
-    pub z_index: u32,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(tag = "type")]
-pub enum OverlayType {
-    Text,
-    Image,
-    AnimatedImage,
+    AnimatedImage {
+        #[serde(with = "serde_bytes")]
+        bytes: Vec<u8>,
+        x: i32,
+        y: i32,
+        z_index: u32,
+    },
 }
 
 #[derive(Serialize, Deserialize, Debug)]
