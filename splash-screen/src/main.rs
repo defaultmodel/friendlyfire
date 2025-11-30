@@ -44,7 +44,8 @@ fn receive_mock_message() -> Message {
     }
 }
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main()]
+async fn main() -> anyhow::Result<()> {
     let mut window = Win32Window::create()?;
     window.show();
 
@@ -112,9 +113,9 @@ fn main() -> anyhow::Result<()> {
 
         // how long until next per-overlay frame change?
         let until_next = compositor.time_until_next_frame_ms(timestamp_ms);
-        let sleep_ms = until_next.unwrap_or(16); // fallback 60 fps
-
-        // Sleep exactly the requested amount (renderer controls timing)
-        std::thread::sleep(time::Duration::from_millis(sleep_ms));
+        match until_next {
+            Some(sleep_ms) => tokio::time::sleep(time::Duration::from_millis(sleep_ms)).await,
+            None => tokio::time::sleep(time::Duration::from_millis(200)).await,
+        }
     }
 }
