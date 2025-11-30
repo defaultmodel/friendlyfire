@@ -2,7 +2,7 @@ use std::{fs, time};
 
 use crate::{
     compositor::Compositor,
-    overlay::{AnimatedOverlay, ImageOverlay},
+    overlay::{AnimatedOverlay, ImageOverlay, TextOverlay},
     window::{SplashWindow, Win32Renderer, Win32Window},
 };
 
@@ -23,12 +23,22 @@ fn receive_mock_message() -> Message {
             name: "FriendlyParty".to_string(),
         },
         kind: MessageType::ShowMedia {
-            overlays: vec![LibOverlay::AnimatedImage {
-                bytes: fs::read("jonh-walk.gif").unwrap(),
-                x: 200,
-                y: 200,
-                z_index: 1000,
-            }],
+            overlays: vec![
+                LibOverlay::Image {
+                    bytes: fs::read("bonk.png").unwrap(),
+                    x: 200,
+                    y: 200,
+                    z_index: 1000,
+                },
+                LibOverlay::Text {
+                    text: "Zoubida!".to_string(),
+                    size: 52,
+                    color: [255, 255, 255, 255],
+                    x: 300,
+                    y: 200,
+                    z_index: 1010,
+                },
+            ],
             options: DisplayOptions { timeout_ms: 3000 },
         },
     }
@@ -75,7 +85,17 @@ fn main() -> anyhow::Result<()> {
                     y,
                     z_index,
                 } => {
-                    todo!();
+                    let overlay = TextOverlay::from_bytes(
+                        &fs::read("fonts/AtkinsonHyperlegibleNextVF-Variable.ttf").unwrap(),
+                        &text,
+                        size,
+                        &color,
+                        x,
+                        y,
+                        z_index as i32,
+                    )
+                    .unwrap();
+                    compositor.add_overlay(Box::new(overlay));
                 }
             }
         }
