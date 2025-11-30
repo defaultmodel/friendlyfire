@@ -5,7 +5,7 @@ use image::ImageReader;
 use crate::{frame::Frame, overlay::Overlay};
 
 pub struct ImageOverlay {
-    pub z_index: u32,
+    z_index: u32,
     pub frame: Frame,
 }
 
