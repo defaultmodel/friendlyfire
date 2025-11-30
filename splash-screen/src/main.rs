@@ -53,7 +53,8 @@ async fn main() -> anyhow::Result<()> {
     let message: Message = receive_mock_message();
 
     // Create compositor
-    let mut compositor = Compositor::new(1920, 1080);
+    let (window_width, window_height) = window.dimensions();
+    let mut compositor = Compositor::new(window_width, window_height);
 
     // Translate message overlays into internal overlays
     if let MessageType::ShowMedia { overlays, .. } = message.kind {
