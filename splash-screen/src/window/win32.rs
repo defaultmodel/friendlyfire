@@ -1,5 +1,8 @@
 use windows::{
-    Win32::{Foundation::*, System::LibraryLoader::*, UI::WindowsAndMessaging::*},
+    Win32::{
+        Foundation::*, Graphics::Gdi::Rectangle, System::LibraryLoader::*,
+        UI::WindowsAndMessaging::*,
+    },
     core::*,
 };
 
@@ -53,6 +56,20 @@ impl SplashWindow for Win32Window {
 
     fn clear(&mut self) {
         todo!()
+    }
+
+    fn dimensions(&self) -> (u32, u32) {
+        let mut dimensions = RECT::default();
+        unsafe {
+            // fills the dimensions struct
+            GetWindowRect(self.handle, &mut dimensions).unwrap();
+        }
+        // https://learn.microsoft.com/en-us/windows/win32/gdi/window-coordinate-system
+        // Points on the screen are described by x and y coordinate pairs.
+        // The x-coordinates increase to the right; y-coordinates increase from top to bottom
+        let width = dimensions.right as u32 - dimensions.left as u32;
+        let height = dimensions.bottom as u32 - dimensions.top as u32;
+        (width, height)
     }
 }
 

@@ -15,4 +15,7 @@ pub trait SplashWindow {
 
     /// Clear the window to full transparency
     fn clear(&mut self);
+
+    /// Returns the size of the fullscreen windows (same as the primary monitor size)
+    fn dimensions(&self) -> (u32, u32);
 }
