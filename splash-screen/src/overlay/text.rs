@@ -1,4 +1,4 @@
-use fontdue::layout::{Layout, TextStyle};
+use cosmic_text::{Attrs, Buffer, Color, FontSystem, Metrics, Shaping, SwashCache};
 
 use crate::{frame::Frame, overlay::Overlay};
 
@@ -9,6 +9,8 @@ pub struct TextOverlay {
 
 impl TextOverlay {
     pub fn from_bytes(
+        font_manager: &mut FontSystem,
+        mut swash_cache: &mut SwashCache,
         font_data: &[u8],
         text: &str,
         font_size: u32,
@@ -17,77 +19,59 @@ impl TextOverlay {
         top: i32,
         z_index: i32,
     ) -> anyhow::Result<Self> {
-        let font = fontdue::Font::from_bytes(font_data, fontdue::FontSettings::default()).unwrap();
-        let fonts = &[font];
+        let line_height: f32 = font_size as f32 * 1.2;
 
-        let mut layout = Layout::new(fontdue::layout::CoordinateSystem::PositiveYDown);
-        let style = TextStyle::new(text, font_size as f32, 0);
-        layout.append(fonts, &style);
+        let text_color = Color::rgba(color[0], color[1], color[2], color[3]);
+        let metrics = Metrics::new(font_size as f32, line_height);
 
-        let glyphs = layout.glyphs();
+        let mut buffer = Buffer::new(font_manager, metrics);
+        let mut buffer = buffer.borrow_with(font_manager);
 
-        // Compute bounding box
-        let mut min_x = f32::MAX;
-        let mut min_y = f32::MAX;
-        let mut max_x = f32::MIN;
-        let mut max_y = f32::MIN;
+        buffer.set_size(None, None);
+        let attrs = Attrs::new()
+            .color(text_color)
+            // TODO Change debug
+            .family(cosmic_text::Family::Name("Algerian"));
+        buffer.set_text(text, &attrs, Shaping::Advanced, None);
 
-        for glyph in glyphs {
-            min_x = min_x.min(glyph.x);
-            min_y = min_y.min(glyph.y);
+        buffer.shape_until_scroll(true);
 
-            max_x = max_x.max(glyph.x + glyph.width as f32);
-            max_y = max_y.max(glyph.y + glyph.height as f32);
-        }
+        let lines = buffer.layout_runs().count() as u32;
 
-        let width = (max_x - min_x).ceil() as u32;
-        let height = (max_y - min_y).ceil() as u32;
+        let height = line_height as u32 * lines;
+        let width = 1920;
+        let mut canvas = vec![0; width * height as usize * 4];
 
-        let mut buffer = vec![0u8; (width * height * 4) as usize];
-
-        for glyph in glyphs {
-            let (metrics, bitmap) = fonts[glyph.font_index]
-                .rasterize_indexed_subpixel(glyph.key.glyph_index, font_size as f32);
-
-            let bmp_width = metrics.width * 3; // rasterize_indexed_subpixel, renders at three time the size
-            let gx = (glyph.x - min_x) as i32;
-            let gy = (glyph.y - min_y) as i32;
-
-            for y in 0..metrics.height {
-                for x in 0..metrics.width {
-                    let bx = x * 3;
-                    let r = bitmap[y * bmp_width + bx];
-                    let g = bitmap[y * bmp_width + bx + 1];
-                    let b = bitmap[y * bmp_width + bx + 2];
-
-                    if r == 0 && g == 0 && b == 0 {
-                        continue;
-                    }
-
-                    let tx = gx + x as i32;
-                    let ty = gy + y as i32;
-
-                    if tx < 0 || ty < 0 || tx >= width as i32 || ty >= height as i32 {
-                        continue;
-                    }
-
-                    let idx = ((ty as u32 * width + tx as u32) * 4) as usize;
-
-                    buffer[idx] = (r as u32 * color[0] as u32 / 255) as u8;
-                    buffer[idx + 1] = (g as u32 * color[1] as u32 / 255) as u8;
-                    buffer[idx + 2] = (b as u32 * color[2] as u32 / 255) as u8;
-                    buffer[idx + 3] = 255;
-                }
+        // Draw the buffer (for performance, instead use SwashCache directly)
+        buffer.draw(swash_cache, text_color, |x, y, w, h, color| {
+            let a = color.a();
+            if a == 0
+                || x < 0
+                || x >= width as i32
+                || y < 0
+                || y >= height as i32
+                || w != 1
+                || h != 1
+            {
+                // Ignore alphas of 0, or invalid x, y coordinates, or unimplemented sizes
+                return;
             }
-        }
+
+            let idx = ((y as usize) * width + (x as usize)) * 4;
+
+            canvas[idx] = color.r();
+            canvas[idx + 1] = color.g();
+            canvas[idx + 2] = color.b();
+            canvas[idx + 3] = color.a();
+        });
 
         // Build final frame
         let frame = Frame {
             left,
             top,
-            width,
+            width: width as u32,
             height,
-            buffer,
+            buffer: canvas,
             delay_ms: 0,
         };
 

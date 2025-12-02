@@ -6,6 +6,7 @@ use crate::{
     window::{SplashWindow, Win32Renderer, Win32Window},
 };
 
+use cosmic_text::{FontSystem, SwashCache};
 use friendlyfire_shared_lib::{DisplayOptions, Message, MessageType, Overlay as LibOverlay};
 use tokio::time::Instant;
 
@@ -24,19 +25,25 @@ fn receive_mock_message() -> Message {
         },
         kind: MessageType::ShowMedia {
             overlays: vec![
+                LibOverlay::AnimatedImage {
+                    bytes: fs::read("jonh-walk.gif").unwrap(),
+                    x: 800,
+                    y: 0,
+                    z_index: 1000,
+                },
                 LibOverlay::Image {
                     bytes: fs::read("bonk.png").unwrap(),
-                    x: 200,
-                    y: 200,
-                    z_index: 1000,
+                    x: 0,
+                    y: 0,
+                    z_index: 1010,
                 },
                 LibOverlay::Text {
                     text: "Zoubida!".to_string(),
                     size: 52,
                     color: [255, 255, 255, 255],
-                    x: 300,
-                    y: 200,
-                    z_index: 1010,
+                    x: 0,
+                    y: 0,
+                    z_index: 1020,
                 },
             ],
             options: DisplayOptions { timeout_ms: 3000 },
@@ -46,13 +53,14 @@ fn receive_mock_message() -> Message {
 
 #[tokio::main()]
 async fn main() -> anyhow::Result<()> {
+    let mut font_manager = FontSystem::new();
+    let mut swash_cache = SwashCache::new();
+
     let mut window = Win32Window::create()?;
     window.show();
 
-    // Mock incoming message
     let message: Message = receive_mock_message();
 
-    // Create compositor
     let (window_width, window_height) = window.dimensions();
     let mut compositor = Compositor::new(window_width, window_height);
 
@@ -88,6 +96,8 @@ async fn main() -> anyhow::Result<()> {
                     z_index,
                 } => {
                     let overlay = TextOverlay::from_bytes(
+                        &mut font_manager,
+                        &mut swash_cache,
                         &fs::read("fonts/AtkinsonHyperlegibleNextVF-Variable.ttf").unwrap(),
                         &text,
                         size,
