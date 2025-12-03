@@ -19,59 +19,51 @@ impl TextOverlay {
         top: i32,
         z_index: i32,
     ) -> anyhow::Result<Self> {
-        let line_height: f32 = font_size as f32 * 1.2;
-
+        let line_height = font_size as f32 * 1.2;
         let text_color = Color::rgba(color[0], color[1], color[2], color[3]);
         let metrics = Metrics::new(font_size as f32, line_height);
 
+        // Prepare the shaping buffer
         let mut buffer = Buffer::new(font_manager, metrics);
-        let mut buffer = buffer.borrow_with(font_manager);
+        let mut buf = buffer.borrow_with(font_manager);
 
-        buffer.set_size(None, None);
+        buf.set_size(None, None);
+
         let attrs = Attrs::new()
             .color(text_color)
-            // TODO Change debug
             .family(cosmic_text::Family::Name("Algerian"));
-        buffer.set_text(text, &attrs, Shaping::Advanced, None);
 
-        buffer.shape_until_scroll(true);
+        buf.set_text(text, &attrs, Shaping::Advanced, None);
+        buf.shape_until_scroll(true);
 
-        let lines = buffer.layout_runs().count() as u32;
-
-        let height = line_height as u32 * lines;
+        let line_count = buf.layout_runs().count() as u32;
+        let height = (line_height as u32) * line_count;
         let width = 1920;
-        let mut canvas = vec![0; width * height as usize * 4];
 
-        // Draw the buffer (for performance, instead use SwashCache directly)
-        buffer.draw(swash_cache, text_color, |x, y, w, h, color| {
-            let a = color.a();
-            if a == 0
-                || x < 0
-                || x >= width as i32
-                || y < 0
-                || y >= height as i32
-                || w != 1
-                || h != 1
-            {
-                // Ignore alphas of 0, or invalid x, y coordinates, or unimplemented sizes
+        let mut pixels = vec![0; width * height as usize * 4];
+
+        buf.draw(swash_cache, text_color, |x, y, w, h, color| {
+            if color.a() == 0 || w != 1 || h != 1 {
                 return;
             }
 
-            let idx = ((y as usize) * width + (x as usize)) * 4;
+            if x < 0 || x >= width as i32 || y < 0 || y >= height as i32 {
+                return;
+            }
 
-            canvas[idx] = color.r();
-            canvas[idx + 1] = color.g();
-            canvas[idx + 2] = color.b();
-            canvas[idx + 3] = color.a();
+            let i = ((y as usize) * width + (x as usize)) * 4;
+            pixels[i] = color.r();
+            pixels[i + 1] = color.g();
+            pixels[i + 2] = color.b();
+            pixels[i + 3] = color.a();
         });
 
-        // Build final frame
         let frame = Frame {
             left,
             top,
             width: width as u32,
             height,
-            buffer: canvas,
+            buffer: pixels,
             delay_ms: 0,
         };
 
