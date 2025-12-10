@@ -1,11 +1,11 @@
-friendlyfire/
-│
-├── shared/         # Share protocol/messages
-│
-├── command-center/ # Sender of media, main interaction point for the software
-├── server/         # Websocket relay server
-└── splash-screen/  # Receiver of media, will show media in a splash-screen manner
-│
+friendlyfire/\
+│\
+├── shared/         # Share protocol/messages\
+│\
+├── command-center/ # Sender of media, main interaction point for the software\
+├── server/         # Websocket relay server\
+└── splash-screen/  # Receiver of media, will show media in a splash-screen manner\
+│\
 └── resources/      # images, assets, icons
 
 AVIF format is unsupported for the splash-screen
@@ -19,7 +19,6 @@ Window : Handles the Window (duh) and the rendering (via OS-level APIs)
 
 
 **Joining a party**, much like Discord
-Should there be a central auth for users ?
 ```mermaid
 sequenceDiagram
     autonumber
