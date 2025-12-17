@@ -11,7 +11,6 @@ impl TextOverlay {
     pub fn from_bytes(
         font_manager: &mut FontSystem,
         mut swash_cache: &mut SwashCache,
-        font_data: &[u8],
         text: &str,
         font_size: u32,
         color: &[u8; 4],

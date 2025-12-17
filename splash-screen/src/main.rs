@@ -1,7 +1,4 @@
-use std::{
-    fs,
-    time::{self, Duration},
-};
+use std::{fs, str::FromStr, time::Duration};
 
 use crate::{
     compositor::Compositor,
@@ -10,8 +7,11 @@ use crate::{
 };
 
 use cosmic_text::{FontSystem, SwashCache};
-use friendlyfire_shared_lib::{DisplayOptions, Message, MessageType, Overlay as LibOverlay};
+use friendlyfire_shared_lib::{
+    DisplayOptions, Overlay as LibOverlay, SenderInfo, ServerMessage, ServerMessageType, Version,
+};
 use tokio::time::Instant;
+use uuid::Uuid;
 
 mod compositor;
 mod frame;
@@ -19,33 +19,30 @@ mod frame;
 mod overlay;
 mod window;
 
-fn receive_mock_message() -> Message {
-    Message {
-        version: "1.0.0".to_string(),
-        party: friendlyfire_shared_lib::Party {
-            id: "beepboop".to_string(),
-            name: "FriendlyParty".to_string(),
-        },
-        kind: MessageType::ShowMedia {
+fn receive_mock_message() -> ServerMessage {
+    ServerMessage {
+        version: Version::from_str("0.1.0").unwrap(),
+        sender: SenderInfo { id: Uuid::new_v4() },
+        kind: ServerMessageType::Overlays {
             overlays: vec![
                 LibOverlay::AnimatedImage {
-                    bytes: fs::read("jonh-walk.gif").unwrap(),
-                    x: 800,
-                    y: 0,
+                    bytes: fs::read("john-walk.gif").unwrap(),
+                    offset_left: 800,
+                    offset_top: 0,
                     z_index: 1000,
                 },
                 LibOverlay::Image {
                     bytes: fs::read("bonk.png").unwrap(),
-                    x: 0,
-                    y: 0,
+                    offset_left: 0,
+                    offset_top: 0,
                     z_index: 1010,
                 },
                 LibOverlay::Text {
                     text: "Zoubida!".to_string(),
                     size: 52,
                     color: [255, 255, 255, 255],
-                    x: 0,
-                    y: 0,
+                    offset_left: 0,
+                    offset_top: 0,
                     z_index: 1020,
                 },
             ],
@@ -58,30 +55,38 @@ pub fn add_overlays_from_message(
     compositor: &mut Compositor,
     font_system: &mut FontSystem,
     swash_cache: &mut SwashCache,
-    message: MessageType,
+    message: ServerMessageType,
 ) -> anyhow::Result<()> {
-    if let MessageType::ShowMedia { overlays, .. } = message {
+    if let ServerMessageType::Overlays { overlays, .. } = message {
         for overlay in overlays {
             match overlay {
                 LibOverlay::Image {
                     bytes,
-                    x,
-                    y,
+                    offset_left,
+                    offset_top,
                     z_index,
                 } => {
-                    compositor
-                        .add_overlay(Box::new(ImageOverlay::from_bytes(&bytes, x, y, z_index)));
+                    compositor.add_overlay(Box::new(ImageOverlay::from_bytes(
+                        &bytes,
+                        offset_left,
+                        offset_top,
+                        z_index,
+                    )));
                 }
 
                 LibOverlay::AnimatedImage {
                     bytes,
-                    x,
-                    y,
+                    offset_left,
+                    offset_top,
                     z_index,
                 } => {
                     let t0 = Instant::now().elapsed().as_millis() as u64;
                     compositor.add_overlay(Box::new(AnimatedOverlay::from_bytes(
-                        &bytes, x, y, z_index, t0,
+                        &bytes,
+                        offset_left,
+                        offset_top,
+                        z_index,
+                        t0,
                     )));
                 }
 
@@ -89,19 +94,18 @@ pub fn add_overlays_from_message(
                     text,
                     size,
                     color,
-                    x,
-                    y,
+                    offset_left,
+                    offset_top,
                     z_index,
                 } => {
                     compositor.add_overlay(Box::new(TextOverlay::from_bytes(
                         font_system,
                         swash_cache,
-                        &fs::read("fonts/AtkinsonHyperlegibleNextVF-Variable.ttf")?,
                         &text,
                         size,
                         &color,
-                        x,
-                        y,
+                        offset_left,
+                        offset_top,
                         z_index as i32,
                     )?));
                 }
