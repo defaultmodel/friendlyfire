@@ -7,7 +7,7 @@ use crate::{
 };
 
 use cosmic_text::{FontSystem, SwashCache};
-use friendlyfire_shared_lib::{
+use ff::{
     DisplayOptions, Overlay as LibOverlay, SenderInfo, ServerMessage, ServerMessageType, Version,
 };
 use tokio::time::Instant;

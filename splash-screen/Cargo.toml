@@ -16,7 +16,7 @@ codegen-units = 1
 [dependencies]
 anyhow = "1.0.100"
 cosmic-text = "0.15.0"
-friendlyfire-shared-lib = { path = "../shared" }
+ff = { package = "friendlyfire-shared-lib", path = "../shared" }
 image = "0.25.9"
 rmp-serde = "1.3.0"
 tokio = { version = "1.48.0", features = ["full"] }
