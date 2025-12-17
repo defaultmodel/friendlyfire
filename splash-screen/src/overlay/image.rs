@@ -29,7 +29,7 @@ impl ImageOverlay {
 
 impl Overlay for ImageOverlay {
     fn z_index(&self) -> i32 {
-        self.frame.delay_ms as i32
+        self.z_index as i32
     }
 
     fn draw(&self, target: &mut Frame, _timestamp_ms: u64) {
