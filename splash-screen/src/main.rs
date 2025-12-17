@@ -7,9 +7,7 @@ use crate::{
 };
 
 use cosmic_text::{FontSystem, SwashCache};
-use ff::{
-    DisplayOptions, Overlay as LibOverlay, SenderInfo, ServerMessage, ServerMessageType, Version,
-};
+use ff::Overlay as LibOverlay;
 use tokio::time::Instant;
 use uuid::Uuid;
 
@@ -19,11 +17,11 @@ mod frame;
 mod overlay;
 mod window;
 
-fn receive_mock_message() -> ServerMessage {
-    ServerMessage {
-        version: Version::from_str("0.1.0").unwrap(),
-        sender: SenderInfo { id: Uuid::new_v4() },
-        kind: ServerMessageType::Overlays {
+fn receive_mock_message() -> ff::ServerMessage {
+    ff::ServerMessage {
+        version: ff::Version::from_str("0.1.0").unwrap(),
+        sender: ff::SenderInfo { id: Uuid::new_v4() },
+        kind: ff::ServerMessageType::Overlays {
             overlays: vec![
                 LibOverlay::AnimatedImage {
                     bytes: fs::read("john-walk.gif").unwrap(),
@@ -46,7 +44,7 @@ fn receive_mock_message() -> ServerMessage {
                     z_index: 1020,
                 },
             ],
-            options: DisplayOptions { timeout_ms: 3000 },
+            options: ff::DisplayOptions { timeout_ms: 3000 },
         },
     }
 }
@@ -55,9 +53,9 @@ pub fn add_overlays_from_message(
     compositor: &mut Compositor,
     font_system: &mut FontSystem,
     swash_cache: &mut SwashCache,
-    message: ServerMessageType,
+    message: ff::ServerMessageType,
 ) -> anyhow::Result<()> {
-    if let ServerMessageType::Overlays { overlays, .. } = message {
+    if let ff::ServerMessageType::Overlays { overlays, .. } = message {
         for overlay in overlays {
             match overlay {
                 LibOverlay::Image {
