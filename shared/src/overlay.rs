@@ -27,7 +27,7 @@ pub enum Overlay {
         /// The offset can be negative, so that image may appear cropped out of the `Frame`
         offset_top: i32,
 
-        /// Z-order for composition (0 = back, higher = front).
+        /// Z-order for composition (0 = back, high = front).
         z_index: u32,
     },
     Image {
@@ -50,7 +50,7 @@ pub enum Overlay {
         /// The offset can be negative, so that image may appear cropped out of the `Frame`
         offset_top: i32,
 
-        /// Z-order for composition (0 = back, higher = front).
+        /// Z-order for composition (0 = back, high = front).
         z_index: u32,
     },
 
@@ -74,7 +74,7 @@ pub enum Overlay {
         /// The offset can be negative, so that image may appear cropped out of the `Frame`
         offset_top: i32,
 
-        /// Z-order for composition (0 = back, higher = front).
+        /// Z-order for composition (0 = back, high = front).
         z_index: u32,
     },
 }

@@ -1,20 +1,30 @@
 #[derive(Clone)]
 pub struct Frame {
+    /// Horizontal offset from the left edge. We are using the top-left corner as the origin as seen in CSSOM.
+    /// See https://developer.mozilla.org/en-US/docs/Web/API/CSSOM_view_API/Coordinate_systems
+    ///
+    /// The offset can be negative
     pub left: i32,
+
+    /// Vertical offset from the top edge. We are using the top-left corner as the origin as seen in CSSOM.
+    /// See https://developer.mozilla.org/en-US/docs/Web/API/CSSOM_view_API/Coordinate_systems
+    ///
+    /// The offset can be negative
     pub top: i32,
 
     pub width: u32,
     pub height: u32,
 
-    /// straight or premultiplied RGBA8.
-    /// Most backends will convert it to some other format
+    /// straight RGBA8.
+    ///
+    /// Conversion to other formats happens in the `Rendering` structs/traits specific to any `Window`
     /// Win32 : BGRA + premultiply
     /// X11 : ARGB
     /// Wayland : wl_shm RGBA or dmabuf upload
     pub buffer: Vec<u8>,
 
     /// Frame duration in milliseconds.
-    /// 0 = treat as “static”.
+    /// 0 = treat as "static".
     pub delay_ms: u32,
 }
 
@@ -54,7 +64,7 @@ impl Frame {
         self.buffer.fill(0);
     }
 
-    /// Copy an RGBA image into the frame buffer with no resizing.
+    /// Copy an RGBA image onto the frame buffer with no resizing.
     /// `src_pixels` must be exactly (src_width * src_height * 4) bytes.
     // TODO: This really should be GPU-accelerated
     pub fn blit(

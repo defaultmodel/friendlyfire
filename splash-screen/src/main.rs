@@ -17,6 +17,7 @@ mod frame;
 mod overlay;
 mod window;
 
+/// Mock function to fake a message from the server
 fn receive_mock_message() -> ff::ServerMessage {
     ff::ServerMessage {
         version: ff::Version::from_str("0.1.0").unwrap(),
@@ -49,6 +50,7 @@ fn receive_mock_message() -> ff::ServerMessage {
     }
 }
 
+/// Adds overlays from `ServerMessage` to a `Compositor`
 pub fn add_overlays_from_message(
     compositor: &mut Compositor,
     font_system: &mut FontSystem,
@@ -114,6 +116,12 @@ pub fn add_overlays_from_message(
     Ok(())
 }
 
+/// Continuously renders `Frame` based on a time reference and
+/// presents them to the window at the cadence dicted by the compositor.
+///
+/// This functions never returns, it is expected to run in an async task (`tokio::spawn`).
+/// Alongside to another task that receives `ServerMessage`.
+// TODO : Allow this function to get `ServerMessage` through a channel
 pub async fn run_render_loop(window: &mut Win32Window, compositor: &mut Compositor) {
     let origin = Instant::now();
 

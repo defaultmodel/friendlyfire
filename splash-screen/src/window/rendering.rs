@@ -4,13 +4,16 @@ use windows::Win32::{Foundation::*, Graphics::Gdi::*, UI::WindowsAndMessaging::*
 
 use crate::{frame::Frame, window::win32::Win32Window};
 
+/// Abstracted renderer capable of presenting a `Frame` onto a `SplashWindow`.
 pub trait Win32Renderer {
-    /// Render a complete Frame to the layered window
+    /// Render a complete `Frame` to the layered window
     fn draw_frame(&self, frame: &Frame);
 }
 
 impl Win32Renderer for Win32Window {
     fn draw_frame(&self, frame: &Frame) {
+        // windows uses pre-multiplied BGRA
+        // https://stackoverflow.com/a/74925357
         let bgra = rgba_to_premultiplied_bgra(&frame.buffer);
 
         unsafe {
@@ -25,6 +28,7 @@ impl Win32Renderer for Win32Window {
     }
 }
 
+/// Convert an RGBA buffer into premultiplied BGRA.
 pub fn rgba_to_premultiplied_bgra(src: &[u8]) -> Vec<u8> {
     let mut bgra = Vec::with_capacity(src.len());
 
@@ -44,6 +48,10 @@ pub fn rgba_to_premultiplied_bgra(src: &[u8]) -> Vec<u8> {
     bgra
 }
 
+/// Create a memory device context compatible with the primary screen.
+///
+/// # Safety
+/// The returned `HDC` must be freed with `DeleteDC`.
 unsafe fn create_compatible_dc() -> HDC {
     unsafe {
         let screen_dc = GetDC(HWND(0));
@@ -53,6 +61,10 @@ unsafe fn create_compatible_dc() -> HDC {
     }
 }
 
+/// Create a 32-bit top-down DIB section and copy pixel data into it.
+///
+/// # Safety
+/// The returned `HBITMAP` must be freed with `DeleteObject`.
 pub unsafe fn create_dib_section(mem_dc: HDC, width: u32, height: u32, bgra: &[u8]) -> HBITMAP {
     let header = BITMAPINFOHEADER {
         biSize: size_of::<BITMAPINFOHEADER>() as u32,
@@ -76,6 +88,9 @@ pub unsafe fn create_dib_section(mem_dc: HDC, width: u32, height: u32, bgra: &[u
     bitmap
 }
 
+/// Update a layered window with the contents of a memory DC.
+///
+/// Positions the window centered on the primary screen.
 unsafe fn update_layered_window(win_handle: HWND, mem_dc: HDC, width: u32, height: u32) {
     let screen_dc = unsafe { GetDC(HWND(0)) };
 
@@ -113,6 +128,7 @@ unsafe fn update_layered_window(win_handle: HWND, mem_dc: HDC, width: u32, heigh
     unsafe { ReleaseDC(HWND(0), screen_dc) };
 }
 
+/// Frees DC state and release GDI resources.
 unsafe fn cleanup_dc(mem_dc: HDC, dib: HBITMAP, old_obj: HGDIOBJ) {
     unsafe {
         SelectObject(mem_dc, old_obj);
@@ -125,6 +141,7 @@ unsafe fn cleanup_dc(mem_dc: HDC, dib: HBITMAP, old_obj: HGDIOBJ) {
     }
 }
 
+/// Clear a layered window by drawing a fully transparent pixel.
 pub fn clear(hwnd: HWND) {
     unsafe {
         let mem_dc = create_compatible_dc();

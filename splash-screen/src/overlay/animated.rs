@@ -19,10 +19,13 @@ impl AnimatedOverlay {
         let frames = frames_iter
             .map(|frame| {
                 let frame = frame.unwrap();
+
+                // delay in `image` is reprenseted by a fraction, we resolve the fraction
                 let delay_ms = {
                     let (numerator, denominator) = frame.delay().numer_denom_ms();
                     numerator / denominator
                 };
+
                 let rgba = frame.into_buffer();
                 let (width, height) = rgba.dimensions();
                 Frame::from_bytes(x, y, width, height, &rgba, delay_ms)
@@ -36,14 +39,12 @@ impl AnimatedOverlay {
         }
     }
 
-    /// Returns the index of the frame to draw for a given timestamp
     fn current_frame_index(&self, timestamp_ms: u64) -> usize {
         if self.frames.is_empty() {
             return 0;
         }
 
         // compute total animation duration
-
         let total_duration: u64 = self.frames.iter().map(|f| f.delay_ms as u64).sum();
         let elapsed = timestamp_ms.saturating_sub(self.start_time_ms);
 
