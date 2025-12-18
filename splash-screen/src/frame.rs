@@ -4,13 +4,13 @@ pub struct Frame {
     /// See https://developer.mozilla.org/en-US/docs/Web/API/CSSOM_view_API/Coordinate_systems
     ///
     /// The offset can be negative
-    pub left: i32,
+    pub offset_left: i32,
 
     /// Vertical offset from the top edge. We are using the top-left corner as the origin as seen in CSSOM.
     /// See https://developer.mozilla.org/en-US/docs/Web/API/CSSOM_view_API/Coordinate_systems
     ///
     /// The offset can be negative
-    pub top: i32,
+    pub offset_top: i32,
 
     pub width: u32,
     pub height: u32,
@@ -30,10 +30,10 @@ pub struct Frame {
 }
 
 impl Frame {
-    pub fn new(left: i32, top: i32, width: u32, height: u32, delay_ms: u128) -> Self {
+    pub fn new(offset_left: i32, offset_top: i32, width: u32, height: u32, delay_ms: u128) -> Self {
         Self {
-            left,
-            top,
+            offset_left,
+            offset_top,
             width,
             height,
             buffer: vec![0; (width * height * 4) as usize],
@@ -43,8 +43,8 @@ impl Frame {
 
     /// Create a frame from RGBA bytes
     pub fn from_bytes(
-        left: i32,
-        top: i32,
+        offset_left: i32,
+        offset_top: i32,
         width: u32,
         height: u32,
         pixels: &[u8],
@@ -52,8 +52,8 @@ impl Frame {
     ) -> Self {
         assert_eq!(pixels.len(), (width * height * 4) as usize);
         Self {
-            left,
-            top,
+            offset_left,
+            offset_top,
             width,
             height,
             buffer: pixels.to_vec(),

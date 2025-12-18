@@ -34,8 +34,8 @@ impl Overlay for ImageOverlay {
 
     fn draw(&self, target: &mut Frame, _timestamp_ms: u128) {
         target.blit(
-            self.frame.left as u32,
-            self.frame.top as u32,
+            self.frame.offset_left as u32,
+            self.frame.offset_top as u32,
             self.frame.width,
             self.frame.height,
             &self.frame.buffer,

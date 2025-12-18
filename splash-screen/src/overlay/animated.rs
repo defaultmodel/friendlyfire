@@ -108,8 +108,8 @@ impl Overlay for AnimatedOverlay {
         let frame = &self.frames[idx];
 
         target.blit(
-            frame.left as u32,
-            frame.top as u32,
+            frame.offset_left as u32,
+            frame.offset_top as u32,
             frame.width,
             frame.height,
             &frame.buffer,
