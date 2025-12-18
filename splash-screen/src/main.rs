@@ -80,7 +80,7 @@ pub fn add_overlays_from_message(
                     offset_top,
                     z_index,
                 } => {
-                    let t0 = Instant::now().elapsed().as_millis() as u64;
+                    let t0 = Instant::now().elapsed().as_millis();
                     compositor.add_overlay(Box::new(AnimatedOverlay::from_bytes(
                         &bytes,
                         offset_left,
@@ -126,7 +126,7 @@ pub async fn run_render_loop(window: &mut Win32Window, compositor: &mut Composit
     let origin = Instant::now();
 
     loop {
-        let timestamp_ms = origin.elapsed().as_millis() as u64;
+        let timestamp_ms = origin.elapsed().as_millis();
         let frame = compositor.render(timestamp_ms);
         window.draw_frame(frame);
 
@@ -134,7 +134,8 @@ pub async fn run_render_loop(window: &mut Win32Window, compositor: &mut Composit
             .time_until_next_frame_ms(timestamp_ms)
             .unwrap_or(200);
 
-        tokio::time::sleep(Duration::from_millis(delay)).await;
+        // The cast should not be an issue, I think...
+        tokio::time::sleep(Duration::from_millis(delay as u64)).await;
     }
 }
 

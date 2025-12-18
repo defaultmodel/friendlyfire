@@ -28,7 +28,7 @@ impl Compositor {
     }
 
     /// Render the `self.canvas` for the given timestamp.
-    pub fn render(&mut self, timestamp_ms: u64) -> &Frame {
+    pub fn render(&mut self, timestamp_ms: u128) -> &Frame {
         self.canvas.clear();
 
         self.overlays.sort_by_key(|o| o.z_index());
@@ -43,7 +43,7 @@ impl Compositor {
     /// Return the earliest time any `Overlay` wants its next `Frame` to be shown.
     ///
     /// Returning `None` indicates that no overlay require time-based updates (static content).
-    pub fn time_until_next_frame_ms(&self, timestamp_ms: u64) -> Option<u64> {
+    pub fn time_until_next_frame_ms(&self, timestamp_ms: u128) -> Option<u128> {
         self.overlays
             .iter()
             .filter_map(|o| o.time_to_next_frame_ms(timestamp_ms))

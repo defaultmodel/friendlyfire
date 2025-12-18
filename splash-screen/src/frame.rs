@@ -25,11 +25,12 @@ pub struct Frame {
 
     /// Frame duration in milliseconds.
     /// 0 = treat as "static".
-    pub delay_ms: u32,
+    // u128 was chosen for consistency reasons with the `image` crate
+    pub delay_ms: u128,
 }
 
 impl Frame {
-    pub fn new(left: i32, top: i32, width: u32, height: u32, delay_ms: u32) -> Self {
+    pub fn new(left: i32, top: i32, width: u32, height: u32, delay_ms: u128) -> Self {
         Self {
             left,
             top,
@@ -47,7 +48,7 @@ impl Frame {
         width: u32,
         height: u32,
         pixels: &[u8],
-        delay_ms: u32,
+        delay_ms: u128,
     ) -> Self {
         assert_eq!(pixels.len(), (width * height * 4) as usize);
         Self {

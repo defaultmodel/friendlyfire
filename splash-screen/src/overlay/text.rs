@@ -80,7 +80,7 @@ impl Overlay for TextOverlay {
         self.z_index
     }
 
-    fn draw(&self, target: &mut Frame, _timestamp_ms: u64) {
+    fn draw(&self, target: &mut Frame, _timestamp_ms: u128) {
         target.blit(
             self.frame.left as u32,
             self.frame.top as u32,
@@ -90,7 +90,7 @@ impl Overlay for TextOverlay {
         );
     }
 
-    fn time_to_next_frame_ms(&self, _timestamp_ms: u64) -> Option<u64> {
+    fn time_to_next_frame_ms(&self, _timestamp_ms: u128) -> Option<u128> {
         None
     }
 }
