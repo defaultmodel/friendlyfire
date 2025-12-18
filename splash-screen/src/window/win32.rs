@@ -3,7 +3,7 @@ use windows::{
     core::*,
 };
 
-use crate::window::traits::SplashWindow;
+use crate::window::{traits::SplashWindow, win32error::Win32Error};
 
 /// A Win32 window that implement the `SplashWindow` trait
 pub struct Win32Window {
@@ -77,11 +77,9 @@ impl SplashWindow for Win32Window {
 
 /// Each window is associated with a particular class, and once the class is registered with the system, windows of that class can be created.
 /// See https://en.wikibooks.org/wiki/Windows_Programming/Window_Creation
-pub unsafe fn register_window_class(classname: PCSTR) -> Result<HINSTANCE> {
+pub unsafe fn register_window_class(classname: PCSTR) -> anyhow::Result<HINSTANCE> {
     // In Win32, an `HMODULE` is equivalent to an `HINSTANCE`, explaining the `.into()`
     let instance: HINSTANCE = unsafe { GetModuleHandleA(None)?.into() };
-    // TODO : Fix this shitty error handling, with `GetLastError`
-    debug_assert!(instance.0 != 0);
 
     // Some options for the windows
     // TODO : Change the `hIcon` to the logo
@@ -98,8 +96,10 @@ pub unsafe fn register_window_class(classname: PCSTR) -> Result<HINSTANCE> {
     // The returned ATOM uniquely identifies the class.
     // TODO : Switch to RegisterClassW as per recommandation : https://learn.microsoft.com/en-us/windows/win32/intl/registering-window-classes
     let atom = unsafe { RegisterClassA(&window_class) };
-    // TODO : Fix this shitty error handling, with `GetLastError`
-    debug_assert!(atom != 0);
+    // RegisterClassA as no Option<_> as a return parameter, we must do the error handling ourselves...
+    if atom == 0 {
+        return Err(Win32Error::from_last_error().into());
+    }
 
     Ok(instance)
 }
@@ -107,7 +107,10 @@ pub unsafe fn register_window_class(classname: PCSTR) -> Result<HINSTANCE> {
 /// Create a fullscreen, transparent, always-on-top layered window.
 ///
 /// The window uses the class previously registered via `register_window_class`
-pub unsafe fn create_layered_window(classname: PCSTR, window_instance: HINSTANCE) -> Result<HWND> {
+pub unsafe fn create_layered_window(
+    classname: PCSTR,
+    window_instance: HINSTANCE,
+) -> anyhow::Result<HWND> {
     unsafe {
         let window_extended_style = WS_EX_LAYERED |
             WS_EX_TOPMOST | // always-on-top
@@ -134,9 +137,9 @@ pub unsafe fn create_layered_window(classname: PCSTR, window_instance: HINSTANCE
             None,
         );
 
+        // CreateWindowExA as no Option<_> as a return parameter, we must do the error handling ourselves...
         if window_handle.0 == 0 {
-            let error = GetLastError();
-            println!("CreateWindowEx failed : {:?}", error);
+            return Err(Win32Error::from_last_error().into());
         }
         Ok(window_handle)
     }
