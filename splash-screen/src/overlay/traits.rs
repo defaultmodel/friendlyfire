@@ -3,7 +3,7 @@ use crate::frame::Frame;
 /// Specifies an element that can be composited onto a `Frame`.
 pub trait Overlay {
     /// Z-order for composition (0 = back, high = front).
-    fn z_index(&self) -> i32;
+    fn z_index(&self) -> u32;
 
     /// Draw the `Overlay` into the given `Frame` for the specified timestamp.
     fn draw(&self, frame: &mut Frame, timestamp_ms: u64);

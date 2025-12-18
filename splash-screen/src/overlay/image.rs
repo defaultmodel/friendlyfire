@@ -28,8 +28,8 @@ impl ImageOverlay {
 }
 
 impl Overlay for ImageOverlay {
-    fn z_index(&self) -> i32 {
-        self.z_index as i32
+    fn z_index(&self) -> u32 {
+        self.z_index
     }
 
     fn draw(&self, target: &mut Frame, _timestamp_ms: u64) {

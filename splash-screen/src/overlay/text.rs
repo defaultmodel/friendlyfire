@@ -4,7 +4,7 @@ use crate::{frame::Frame, overlay::Overlay};
 
 /// Static text overlay rasterized as a bitmap.
 pub struct TextOverlay {
-    pub z_index: i32,
+    pub z_index: u32,
     pub frame: Frame,
 }
 
@@ -18,7 +18,7 @@ impl TextOverlay {
         color: &[u8; 4],
         left: i32,
         top: i32,
-        z_index: i32,
+        z_index: u32,
     ) -> anyhow::Result<Self> {
         // TODO : change this for a better heuristic. See https://grtcalculator.com/math/
         let line_height = font_size as f32 * 1.2;
@@ -76,7 +76,7 @@ impl TextOverlay {
 }
 
 impl Overlay for TextOverlay {
-    fn z_index(&self) -> i32 {
+    fn z_index(&self) -> u32 {
         self.z_index
     }
 

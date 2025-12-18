@@ -95,8 +95,8 @@ impl AnimatedOverlay {
 }
 
 impl Overlay for AnimatedOverlay {
-    fn z_index(&self) -> i32 {
-        self.z_index as i32
+    fn z_index(&self) -> u32 {
+        self.z_index
     }
 
     fn draw(&self, target: &mut Frame, timestamp_ms: u64) {

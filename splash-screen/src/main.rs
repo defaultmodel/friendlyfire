@@ -106,7 +106,7 @@ pub fn add_overlays_from_message(
                         &color,
                         offset_left,
                         offset_top,
-                        z_index as i32,
+                        z_index,
                     )?));
                 }
             }
