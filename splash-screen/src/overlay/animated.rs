@@ -6,8 +6,8 @@ use crate::{frame::Frame, overlay::Overlay};
 
 pub struct AnimatedOverlay {
     pub frames: Vec<Frame>,
-    pub z_index: u32,
-    pub start_time_ms: u128, // when the animation started
+    z_index: u32,
+    start_time_ms: u128, // when the animation started
 }
 
 impl AnimatedOverlay {

@@ -4,7 +4,7 @@ use crate::{frame::Frame, overlay::Overlay};
 
 /// Static text overlay rasterized as a bitmap.
 pub struct TextOverlay {
-    pub z_index: u32,
+    z_index: u32,
     pub frame: Frame,
 }
 
